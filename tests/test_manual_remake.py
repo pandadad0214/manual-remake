@@ -39,6 +39,36 @@ def pdf_text(b: bytes) -> str:
     return '\n'.join(p.extract_text() or '' for p in PdfReader(io.BytesIO(b)).pages)
 
 
+STORE = 'https://apify.com/pandadad0214/manual-remake'
+
+
+def assert_edition_nav(text, *, current, heading=False):
+    """The delivered file names all three editions and spells out how to open the other two.
+
+    `current` is 'sample', 'text', or 'standard'. Paid files must not carry the FREE SAMPLE stamp.
+    """
+    text = ' '.join(text.split())
+    if heading:
+        assert 'Switch editions' in text
+    assert STORE in text
+    assert 'Text-only' in text and '$9' in text
+    assert 'Standard' in text and '$39' in text
+    assert 'Manual files' in text and 'Manual links' in text
+    assert 'LLM API key' in text
+    if current == 'sample':
+        assert 'FREE SAMPLE' in text
+        assert 'turn off "Reuse and clean pictures"' in text
+        assert 'leave "Reuse and clean pictures" on' in text
+    else:
+        assert 'FREE SAMPLE' not in text
+        assert 'leave Manual files and Manual links empty, or tick Free sample, then Start' in text
+        assert 'No key needed' in text
+        if current == 'text':
+            assert 'leave "Reuse and clean pictures" on' in text
+        else:
+            assert 'turn off "Reuse and clean pictures"' in text
+
+
 async def fixture_rewrite(messages):
     fixture_rewrite.seen = messages
     return REWRITE
@@ -156,6 +186,7 @@ def test_print_pdf_from_fixture_rewrite_standard():
     for needle in ('Birchline ST-2', 'Parts list', 'Warnings from the original manual', 'choking hazard', 'Step 5: Stand the table up',
                    'Missing or unclear in the source', 'Checklist', 'not a certified replacement', 'Easy', '20-30 minutes', 'Figure 1'):
         assert needle in txt, needle
+    assert_edition_nav(txt, current='standard', heading=True)
     assert 'coupon' not in txt
     assert 'ANSI' not in txt and 'OSHA' not in txt
     assert any(len(p.images) for p in PdfReader(io.BytesIO(pdf)).pages)
@@ -243,6 +274,9 @@ def test_empty_input_runs_free_sample_without_key(tmp_path):
     assert pdf and pdf.startswith(b'%PDF')
     txt = pdf_text(pdf)
     assert 'FREE SAMPLE' in txt and 'not from a file you' in txt and 'Free sample made from a fictional demo manual' in txt
+    assert_edition_nav(txt, current='sample', heading=True)
+    assert_edition_nav(summ['switchEditions'], current='sample')
+    assert STORE in summ['takeaway'] and 'Text-only' in summ['takeaway'] and 'Standard' in summ['takeaway']
     assert 'Checklist' in txt and 'Free sample: Birchline' in txt
     assert _charges(tmp_path) == []                                      # nothing charged in sample mode
 
@@ -287,6 +321,8 @@ def test_text_only_when_images_turned_off():
     assert res['mode'] == 'text' and res['modeNote'] == NOTE_OPT_OUT and not res['figures']
     txt = pdf_text(res['pdf'])
     assert 'Text-only edition' in txt and 'Figure' not in txt
+    assert_edition_nav(txt, current='text', heading=True)
+    assert_edition_nav(res['markdown'], current='text', heading=True)
     assert not any(len(p.images) for p in PdfReader(io.BytesIO(res['pdf'])).pages)
     assert not any(c.get('type') == 'image_url' for c in fixture_rewrite.seen[1]['content'])
 
@@ -326,6 +362,8 @@ def test_actor_summary_says_text_only(tmp_path, monkeypatch):
     assert p.returncode == 0, p.stderr[-2000:]
     assert called and summ['status'] == 'succeeded' and summ['edition'] == 'text' and summ['sample'] is False
     assert 'Text-only' in summ['takeaway'] and 'no usable pictures' in summ['takeaway']
+    assert_edition_nav(summ['switchEditions'], current='text')
+    assert_edition_nav(summ['takeaway'], current='text')
     assert _out_pdf(kv).startswith(b'%PDF')
     assert [c.get('event_name', c.get('eventName')) for c in _charges(tmp_path)] == ['text-remake']
     assert summ['charged'] == 1 and summ['chargedEvent'] == 'text-remake'
@@ -340,6 +378,8 @@ def test_paid_standard_run_charges_once_after_pdf(tmp_path, monkeypatch):
     assert [c.get('event_name', c.get('eventName')) for c in _charges(tmp_path)] == ['standard-remake']
     txt = pdf_text(_out_pdf(kv))
     assert 'not a certified replacement' in txt and 'FREE SAMPLE' not in txt and 'ignore previous' not in txt
+    assert_edition_nav(txt, current='standard', heading=True)
+    assert_edition_nav(summ['switchEditions'], current='standard')
     rows = [json.loads(f.read_text()) for f in sorted((tmp_path / 'storage' / 'datasets' / 'default').glob('0*.json'))]
     assert rows and rows[0]['type'] == 'overview' and all(r.get('summary') for r in rows)
 

@@ -1,6 +1,6 @@
 # Manual Remake: rewrite a confusing manual into a clear, printable PDF
 
-**Upload a PDF or photos of an existing instruction manual and get back a clearer English manual you can keep or print.** Manual Remake by Panda Federation rewrites the steps in plain English, cleans up the parts list, pulls every warning into one place, estimates difficulty and time, flags missing or unclear steps instead of guessing, adds a checklist, and (Standard edition) straightens, crops and cleans **your own pictures** and adds red numbered markers that match the rewritten steps.
+**Upload a PDF or photos of an existing instruction manual and get back a clearer English manual you can keep or print.** Manual Remake by Panda Federation rewrites the steps in plain English, cleans up the parts list, pulls every warning into one place, estimates difficulty and time, flags missing or unclear steps instead of guessing, adds a checklist, and (Standard edition) straightens, crops and cleans **your own pictures** and adds red numbered markers that match the rewritten steps. Three editions share one Actor: the free sample (no upload, no key, no charge), Text-only ($9 per successful run, pictures off), and Standard ($39 per successful run, pictures on). Steps to switch are in [Switch editions](#switch-editions).
 
 This is a rewrite of the file you upload. It is not an official or certified replacement for the manufacturer's manual and makes no safety, standards or compliance claim.
 
@@ -10,18 +10,41 @@ Tagged builds match the Apify Actor version (latest: [v0.1.3](https://github.com
 
 ## Use it on Apify
 
-Manual Remake runs as an Apify Actor at [apify.com/pandadad0214/manual-remake](https://apify.com/pandadad0214/manual-remake). There is nothing to install.
+Manual Remake runs as an Apify Actor at [apify.com/pandadad0214/manual-remake](https://apify.com/pandadad0214/manual-remake). There is nothing to install. The same page runs all three editions: the free sample, Text-only ($9 per successful run), and Standard ($39 per successful run).
 
 ### Free sample (no upload, no key, no charge)
 
-Click **Start** with no files (or tick **Free sample**) and you get a real remade PDF of a short, fictional demo manual (the "Birchline ST-2 side table") that ships with the Actor. It shows the full layout: at-a-glance box, warnings, parts list, plain-English steps, flagged gaps, cleaned pictures with numbered markers and the checklist. The sample uses a pre-made rewrite, so no AI model is called, no key is needed and nothing is charged. The PDF and the run summary are clearly marked **FREE SAMPLE**: it is never presented as a remake of your file.
+Click **Start** with **Manual files** and **Manual links** empty (or tick **Free sample**) and you get a real remade PDF of a short, fictional demo manual (the "Birchline ST-2 side table") that ships with the Actor. It shows the full layout: at-a-glance box, warnings, parts list, plain-English steps, flagged gaps, cleaned pictures with numbered markers and the checklist. The sample uses a pre-made rewrite, so no AI model is called, no key is needed and nothing is charged. The PDF and the run summary are clearly marked **FREE SAMPLE**: it is never presented as a remake of your file.
 
-### Remake your own manual (paid)
+To remake your own manual, use a paid edition. A paid run always needs your own key. If you upload files without a key, the run stops and asks for one; it never swaps in the demo.
+
+- **Text-only ($9 per successful run):** upload your PDF or photos in **Manual files** (or paste links in **Manual links**), paste your **LLM API key**, turn off **Reuse and clean pictures**, then **Start**.
+- **Standard ($39 per successful run):** upload your PDF or photos in **Manual files** (or paste links in **Manual links**), paste your **LLM API key**, leave **Reuse and clean pictures** on, then **Start**.
+
+### Text-only ($9 per successful run)
+
+A paid remake of your own manual with pictures off: plain-English steps, parts list, warnings, difficulty and time, flagged gaps, and a checklist. You get this edition when **Reuse and clean pictures** is off, or when the upload has no usable pictures (the run is then priced as Text-only). Open it from the [Store page](https://apify.com/pandadad0214/manual-remake): upload your PDF or photos (or paste links), paste your **LLM API key**, turn off **Reuse and clean pictures**, then **Start**.
+
+From a Text-only result you can open the other two editions on that same page:
+
+- **Free sample (no charge):** leave **Manual files** and **Manual links** empty, or tick **Free sample**, then **Start**. No key needed. The PDF and summary are marked **FREE SAMPLE** (bundled fictional Birchline ST-2 demo).
+- **Standard ($39 per successful run):** upload your PDF or photos (or paste links), paste your **LLM API key**, leave **Reuse and clean pictures** on, then **Start**.
+
+### Standard ($39 per successful run)
+
+A paid remake of your own manual with your pictures straightened, cropped, cleaned, and numbered to match the steps. This is the default. Open it from the [Store page](https://apify.com/pandadad0214/manual-remake): upload your PDF or photos (or paste links), paste your **LLM API key**, leave **Reuse and clean pictures** on, then **Start**.
+
+From a Standard result you can open the other two editions on that same page:
+
+- **Free sample (no charge):** leave **Manual files** and **Manual links** empty, or tick **Free sample**, then **Start**. No key needed. The PDF and summary are marked **FREE SAMPLE** (bundled fictional Birchline ST-2 demo).
+- **Text-only ($9 per successful run):** upload your PDF or photos (or paste links), paste your **LLM API key**, turn off **Reuse and clean pictures**, then **Start**.
+
+### Run a paid remake
 
 1. Upload the manual in **Manual files** (PDF or photos of the pages), or paste direct public or share links in **Manual links**.
 2. Paste your **LLM API key** (OpenAI, or any OpenAI-compatible provider with an https **LLM base URL**). Your own manual is always rewritten with your own key, so model usage is billed by your provider. The key is stored encrypted and never logged. If you upload files without a key, the run stops and asks for one; it never swaps in the demo.
-3. Leave **Reuse and clean pictures** on for the Standard edition, or turn it off for a Text-only edition.
-4. Click **Start**, then download **OUTPUT.pdf** from the run's **Output** tab (or **Storage → Key-value store**).
+3. Leave **Reuse and clean pictures** on for Standard, or turn it off for Text-only.
+4. Click **Start**, then download **OUTPUT.pdf** from the run's **Output** tab (or **Storage → Key-value store**). The PDF and `SUMMARY` name the edition you got and spell out how to open the other two.
 
 **Supported inputs:** files uploaded in the **Manual files** box, and direct public links (including Google Drive and Dropbox share links). Links to private Apify storage do not work, because the Actor runs with limited permissions and cannot read other stores in your account; upload the file instead.
 
@@ -40,6 +63,18 @@ Click **Start** with no files (or tick **Free sample**) and you get a real remad
 - Refused or failed runs cost nothing, and the free sample is always free.
 - If your **Maximum cost per run** is below the edition's price, the run stops before calling your model, so you do not spend model credit on a remake that cannot be delivered.
 
+### Switch editions
+
+All three editions are the same Actor: [apify.com/pandadad0214/manual-remake](https://apify.com/pandadad0214/manual-remake).
+
+| To open | Price | What you do |
+|---|---|---|
+| **Free sample** | No charge | Leave **Manual files** and **Manual links** empty, or tick **Free sample**, then **Start**. No LLM API key. You get the bundled fictional Birchline ST-2 demo. The PDF and summary are marked **FREE SAMPLE**. |
+| **Text-only** | **$9 per successful run** | Upload your PDF or photos (or paste links), paste your **LLM API key**, turn off **Reuse and clean pictures**, then **Start**. |
+| **Standard** | **$39 per successful run** | Upload your PDF or photos (or paste links), paste your **LLM API key**, leave **Reuse and clean pictures** on, then **Start**. |
+
+A paid run of your own file always needs your own key. If you upload files without a key, the run stops and asks for one. It never swaps in the demo.
+
 ### Input examples
 
 Free sample: `{}` or `{"sampleMode": true}`
@@ -57,6 +92,8 @@ Your own manual:
 }
 ```
 
+Text-only is the same input with `"includeImages": false` (turn off **Reuse and clean pictures**).
+
 ### What is in the PDF
 
 - **At a glance:** difficulty (Easy / Moderate / Hard, with the reason), time estimate, people needed, tools
@@ -67,6 +104,7 @@ Your own manual:
 - **Your pictures, cleaned** (Standard): straightened, cropped, paper evened out, with red numbered markers matching the step numbers
 - **Checklist page** to tick off as you go
 - A footer on every page: *rewrite of your uploaded manual, not a certified replacement*
+- **Switch editions** at the end (and on the free-sample banner): how to open the free sample, Text-only, and Standard, with the Store link
 
 ### Other outputs
 
@@ -76,7 +114,7 @@ Your own manual:
 | `REMAKE.md` | The same content as Markdown |
 | `REWRITE.json` | Structured rewrite (steps, parts, warnings, gaps, figures) |
 | `fig-N.png` | Each cleaned picture with its numbered markers (Standard) |
-| `SUMMARY` | Edition (`sample`, `text` or `standard`), `sample` flag, counts, pictures used or skipped and why, hidden text removed, what was charged, one-line `takeaway` |
+| `SUMMARY` | Edition (`sample`, `text` or `standard`), `sample` flag, counts, pictures used or skipped and why, hidden text removed, what was charged, `takeaway`, and `switchEditions` (how to open the free sample, Text-only, and Standard) |
 | Dataset (overview view) | An overview row, then one row per warning, part, step, gap and picture, each with a one-line `summary` |
 
 ### Hidden text in uploads

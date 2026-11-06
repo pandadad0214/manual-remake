@@ -7,6 +7,6 @@
     "markdown": {"title": "Remade manual (Markdown)", "key": "REMAKE.md"},
     "rewrite": {"title": "Structured rewrite (JSON)", "key": "REWRITE.json"},
     "figures": {"title": "Cleaned pictures with callouts", "keyPrefix": "fig-"},
-    "summary": {"title": "Run summary", "key": "SUMMARY", "description": "Agent-friendly keys: `takeaway`, `edition`, `modeNote`, `counts`, `hiddenTextRemoved`."}
+    "summary": {"title": "Run summary", "key": "SUMMARY", "description": "Agent-friendly keys: `takeaway`, `switchEditions`, `edition`, `modeNote`, `counts`, `hiddenTextRemoved`."}
   }
 }

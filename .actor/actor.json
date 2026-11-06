@@ -2,7 +2,7 @@
   "actorSpecification": 1,
   "name": "manual-remake",
   "title": "Manual Remake: Confusing Manual to Clear Printable PDF",
-  "description": "Upload a PDF or photos of a confusing manual; get a clear English print PDF: plain steps, parts list, warnings, difficulty and time, flagged gaps, checklist, and your own pictures cleaned with numbered callouts. Runs on your own OpenAI-compatible key.",
+  "description": "Clear English print PDF. Free sample: leave files and links empty or tick Free sample, then Start (no key). Text-only $9: upload, your key, turn off Reuse and clean pictures. Standard $39: upload, your key, leave that on.",
   "version": "0.1",
   "buildTag": "latest",
   "meta": {
