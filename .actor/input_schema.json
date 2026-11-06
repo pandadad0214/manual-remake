@@ -1,0 +1,77 @@
+{
+  "title": "Manual Remake input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "files": {
+      "title": "Manual files",
+      "type": "array",
+      "editor": "fileupload",
+      "description": "Upload the manual: one PDF, several PDFs, or photos of the pages (JPEG, PNG, WebP). Up to 15 pages or photos per run in total (PDF pages + extra photos). Over 15, the run stops with a message and nothing is charged."
+    },
+    "fileUrls": {
+      "title": "Manual links",
+      "type": "array",
+      "editor": "stringList",
+      "description": "Or paste direct links to the PDF or photos. Google Drive and Dropbox share links are converted to direct downloads. Up to 50 MB per file."
+    },
+    "includeImages": {
+      "title": "Reuse and clean pictures (Standard edition)",
+      "type": "boolean",
+      "description": "On (default): pictures from your upload are straightened, cropped and cleaned, and get red numbered markers that match the rewritten steps (Standard edition). Off: text-only remake (Text-only edition). If no usable pictures are found, the run is automatically Text-only and priced as Text-only.",
+      "default": true,
+      "editor": "checkbox"
+    },
+    "checklistMode": {
+      "title": "Add a checklist page",
+      "type": "boolean",
+      "description": "Adds tick boxes to every step and a one-page checklist at the end. Default: on.",
+      "default": true,
+      "editor": "checkbox"
+    },
+    "title": {
+      "title": "Title override",
+      "type": "string",
+      "editor": "textfield",
+      "description": "Optional. Title for the remade manual. Leave empty to use the product name found in the source."
+    },
+    "paperSize": {
+      "title": "Paper size",
+      "type": "string",
+      "editor": "select",
+      "enum": ["letter", "a4"],
+      "enumTitles": ["US Letter", "A4"],
+      "default": "letter",
+      "description": "Page size of the print PDF."
+    },
+    "llmApiKey": {
+      "title": "LLM API key",
+      "type": "string",
+      "editor": "textfield",
+      "isSecret": true,
+      "sectionCaption": "Rewrite model (your own key)",
+      "description": "Required. Your own OpenAI API key (or a key for another OpenAI-compatible provider, with the base URL below). The rewrite runs on your key, so model usage is billed by your provider, not by this Actor. The key is stored encrypted by Apify and is never logged or saved in the output."
+    },
+    "llmModel": {
+      "title": "LLM model",
+      "type": "string",
+      "editor": "textfield",
+      "default": "gpt-4o-mini",
+      "description": "Model name. Must accept pictures when you upload photos or scans (gpt-4o-mini and gpt-4o do). Default: gpt-4o-mini."
+    },
+    "llmBaseUrl": {
+      "title": "LLM base URL",
+      "type": "string",
+      "editor": "textfield",
+      "description": "Optional. Leave empty for OpenAI (https://api.openai.com/v1). For another OpenAI-compatible provider, paste its base URL ending in /v1."
+    },
+    "pdfPassword": {
+      "title": "PDF password",
+      "type": "string",
+      "editor": "textfield",
+      "isSecret": true,
+      "description": "Optional. Only for password-protected PDFs you are allowed to open."
+    }
+  },
+  "required": ["llmApiKey"]
+}

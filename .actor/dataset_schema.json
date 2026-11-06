@@ -1,0 +1,31 @@
+{
+  "actorSpecification": 1,
+  "fields": {
+    "type": "object",
+    "properties": {
+      "type": {"type": "string", "description": "warning, part, step, gap or figure"},
+      "number": {"type": ["integer", "null"], "description": "Step number (for gaps: the step it comes after)"},
+      "title": {"type": "string"},
+      "text": {"type": "string"},
+      "sourceRef": {"type": ["string", "null"]},
+      "summary": {"type": "string", "description": "One plain-English line describing this item. Read this first when you are an AI agent."}
+    }
+  },
+  "views": {
+    "overview": {
+      "title": "Remade manual",
+      "transformation": {"fields": ["type", "number", "title", "text", "sourceRef", "figureKey"]},
+      "display": {
+        "component": "table",
+        "properties": {
+          "type": {"label": "Type", "format": "text"},
+          "number": {"label": "#", "format": "number"},
+          "title": {"label": "Title", "format": "text"},
+          "text": {"label": "Text", "format": "text"},
+          "sourceRef": {"label": "Source", "format": "text"},
+          "figureKey": {"label": "Picture file", "format": "text"}
+        }
+      }
+    }
+  }
+}

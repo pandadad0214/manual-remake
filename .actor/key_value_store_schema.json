@@ -1,0 +1,12 @@
+{
+  "actorKeyValueStoreSchemaVersion": 1,
+  "title": "Manual Remake files",
+  "description": "The print-friendly PDF, a Markdown copy, the structured rewrite, cleaned pictures and the run summary.",
+  "collections": {
+    "pdf": {"title": "Remade manual (print PDF)", "key": "OUTPUT.pdf", "contentTypes": ["application/pdf"]},
+    "markdown": {"title": "Remade manual (Markdown)", "key": "REMAKE.md"},
+    "rewrite": {"title": "Structured rewrite (JSON)", "key": "REWRITE.json"},
+    "figures": {"title": "Cleaned pictures with callouts", "keyPrefix": "fig-"},
+    "summary": {"title": "Run summary", "key": "SUMMARY", "description": "Agent-friendly keys: `takeaway`, `edition`, `modeNote`, `counts`, `hiddenTextRemoved`."}
+  }
+}

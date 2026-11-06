@@ -1,0 +1,10 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Manual Remake output",
+  "properties": {
+    "pdf": {"type": "string", "title": "Remade manual (PDF)", "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/OUTPUT.pdf"},
+    "table": {"type": "string", "title": "Steps, parts, warnings and gaps", "template": "{{links.apiDefaultDatasetUrl}}/items?view=overview"},
+    "markdown": {"type": "string", "title": "Remade manual (Markdown)", "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/REMAKE.md"},
+    "summary": {"type": "string", "title": "Run summary", "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/SUMMARY", "description": "Agent-friendly keys: `takeaway`, `edition`, `counts`."}
+  }
+}

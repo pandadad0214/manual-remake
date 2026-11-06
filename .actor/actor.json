@@ -1,0 +1,22 @@
+{
+  "actorSpecification": 1,
+  "name": "manual-remake",
+  "title": "Manual Remake: Rewrite Confusing Manuals into a Clear Printable PDF",
+  "description": "Upload a PDF or photos of a confusing manual; get a clear English print PDF: plain steps, parts list, warnings, difficulty and time, flagged gaps, checklist, and your own pictures cleaned with numbered callouts. Runs on your own OpenAI-compatible key.",
+  "version": "0.1",
+  "buildTag": "latest",
+  "meta": {
+    "templateId": "python-start"
+  },
+  "input": "./input_schema.json",
+  "storages": {
+    "dataset": "./dataset_schema.json",
+    "keyValueStore": "./key_value_store_schema.json"
+  },
+  "output": "./output_schema.json",
+  "dockerfile": "../Dockerfile",
+  "readme": "../README.md",
+  "minMemoryMbytes": 1024,
+  "maxMemoryMbytes": 4096,
+  "defaultMemoryMbytes": 2048
+}
