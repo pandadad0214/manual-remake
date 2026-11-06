@@ -54,7 +54,8 @@ async def run_pipeline(sources: list[Source], *, include_images: bool = True, ti
                        checklist: bool = True, paper: str = 'letter', password: str | None = None,
                        rewrite_fn: Callable[[list[dict]], Awaitable[dict]], log=print,
                        before_rewrite: Callable[[str], Awaitable[None]] | None = None, banner: str = '',
-                       footer: str | None = None, origin: str = 'your upload', source_note: str | None = None) -> dict:
+                       footer: str | None = None, origin: str = 'your upload', source_note: str | None = None,
+                       sample: bool = False) -> dict:
     """before_rewrite(planned_mode) runs after extraction and before the model call (e.g. a max-charge check).
     banner: shown at the top of the PDF and Markdown (used for the free sample). footer: overrides the page footer."""
     check_cap(sources)
@@ -93,9 +94,10 @@ async def run_pipeline(sources: list[Source], *, include_images: bool = True, ti
 
     names = [s.name for s in sources]
     pdf = build_pdf(rw, figures_out, mode=mode, mode_note=note, checklist=checklist, paper=paper, source_names=names,
-                    banner=banner, footer=footer, origin=origin, source_note=source_note)
+                    banner=banner, footer=footer, origin=origin, source_note=source_note, sample=sample)
     return {
-        'mode': mode, 'modeNote': note, 'rewrite': rw, 'pdf': pdf, 'markdown': to_markdown(rw, mode, note, banner),
+        'mode': mode, 'modeNote': note, 'rewrite': rw, 'pdf': pdf,
+        'markdown': to_markdown(rw, mode, note, banner, sample=sample, source_note=source_note),
         'figures': figures_out, 'figureRecords': fig_records, 'units': units, 'sources': names,
         'textPages': len(text_pages), 'scanPages': len(ex.scanPages), 'usablePictures': len(prepared),
         'skippedImages': ex.skippedImages, 'hiddenRemoved': ex.hiddenRemoved,

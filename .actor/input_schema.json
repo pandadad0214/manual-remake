@@ -8,24 +8,24 @@
       "type": "boolean",
       "editor": "checkbox",
       "default": false,
-      "description": "Turn on to get a free sample PDF made from a short fictional demo manual that ships with the Actor (no model key needed, nothing charged). Your own files are not processed while this is on. The sample also runs automatically when no files or links are given."
+      "description": "Free sample edition: no upload, no LLM key, no charge. Tick this, or leave Manual files and Manual links empty, then Start. You get the bundled fictional Birchline ST-2 demo. The PDF and summary are marked FREE SAMPLE. Your own files are not processed while this is on. To Text-only ($9 per successful run): turn this off, upload your PDF or photos (or paste links), paste your LLM API key, turn off \"Reuse and clean pictures\", then Start. To Standard ($39 per successful run): same upload and your own key, leave \"Reuse and clean pictures\" on, then Start. If you upload files without a key, the run stops and does not swap in the demo. https://apify.com/pandadad0214/manual-remake"
     },
     "files": {
       "title": "Manual files",
       "type": "array",
       "editor": "fileupload",
-      "description": "Upload the manual: one PDF, several PDFs, or photos of the pages (JPEG, PNG, WebP). Up to 15 pages or photos per run in total (PDF pages + extra photos). Over 15, the run stops with a message and nothing is charged. Leave empty (and links empty) for the free sample."
+      "description": "Upload your manual for a paid remake: one PDF, several PDFs, or photos of the pages (JPEG, PNG, WebP). Up to 15 pages or photos per run (PDF pages plus extra photos). Over 15, the run stops and nothing is charged. Leave this and Manual links empty, or tick Free sample, then Start for the free sample (no key, no charge, fictional Birchline ST-2 demo, marked FREE SAMPLE). With your files and your LLM API key: turn off \"Reuse and clean pictures\" for Text-only ($9 per successful run), or leave it on for Standard ($39 per successful run), then Start. Uploaded files without a key are not replaced by the demo. https://apify.com/pandadad0214/manual-remake"
     },
     "fileUrls": {
       "title": "Manual links",
       "type": "array",
       "editor": "stringList",
-      "description": "Or paste direct public links (or share links) to the PDF or photos. Google Drive and Dropbox share links are converted to direct downloads. Up to 50 MB per file. Private Apify storage links do not work (the Actor runs with limited permissions): use the upload box instead."
+      "description": "Or paste direct public links (or share links) to the PDF or photos. Google Drive and Dropbox share links are converted to direct downloads. Up to 50 MB per file. Private Apify storage links do not work (the Actor runs with limited permissions): use the upload box instead. Leave this and Manual files empty, or tick Free sample, then Start for the free sample (no key, no charge). With links plus your LLM API key, turn off \"Reuse and clean pictures\" for Text-only ($9 per successful run) or leave it on for Standard ($39 per successful run), then Start. https://apify.com/pandadad0214/manual-remake"
     },
     "includeImages": {
-      "title": "Reuse and clean pictures (Standard edition)",
+      "title": "Reuse and clean pictures (Standard on, Text-only off)",
       "type": "boolean",
-      "description": "On (default): pictures from your upload are straightened, cropped and cleaned, and get red numbered markers that match the rewritten steps (Standard edition). Off: text-only remake (Text-only edition). If no usable pictures are found, the run is automatically Text-only and priced as Text-only.",
+      "description": "On (default) is Standard ($39 per successful run): pictures from your upload are straightened, cropped and cleaned, with red numbered markers that match the steps. Off is Text-only ($9 per successful run): plain-English steps, parts, warnings, difficulty and time, flagged gaps and a checklist, with no picture work. If no usable pictures are found, the run is Text-only and priced as Text-only. Both paid editions need your PDF or photos (Manual files or Manual links) and your LLM API key, then Start. To the free sample: leave Manual files and Manual links empty, or tick Free sample, then Start. No key needed and nothing is charged. https://apify.com/pandadad0214/manual-remake",
       "default": true,
       "editor": "checkbox"
     },
@@ -63,7 +63,7 @@
       "editor": "textfield",
       "isSecret": true,
       "sectionCaption": "Rewrite model (your own key)",
-      "description": "Required to remake your own manual (not needed for the free sample). Your own OpenAI API key, or a key for another OpenAI-compatible provider with the base URL below. The rewrite runs on your key, so model usage is billed by your provider, not by this Actor. The key is stored encrypted by Apify and is never logged or saved in the output."
+      "description": "Required for a paid remake of your own manual: Text-only ($9 per successful run) or Standard ($39 per successful run). Not needed for the free sample: leave Manual files and Manual links empty, or tick Free sample, then Start. Paste your own OpenAI API key, or a key for another OpenAI-compatible provider with the base URL below. The rewrite runs on your key, so model usage is billed by your provider. The key is stored encrypted and is never logged or saved in the output. Text-only: turn off \"Reuse and clean pictures\". Standard: leave \"Reuse and clean pictures\" on. If you upload files without a key, the run stops and does not swap in the demo. https://apify.com/pandadad0214/manual-remake"
     },
     "llmModel": {
       "title": "LLM model",

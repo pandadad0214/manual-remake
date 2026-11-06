@@ -13,6 +13,7 @@ from urllib.parse import unquote, urlparse
 import httpx
 from apify import Actor
 
+from .editions import KEY_RULE, STEP_STANDARD, STEP_TEXT, switch_editions
 from .extract import PAGE_CAP, InputError, check_cap, make_source
 from .pipeline import run_pipeline
 from .rewrite import DEFAULT_MODEL, call_llm
@@ -24,7 +25,7 @@ HINT_403 = (' Use the "Manual files" upload box or a public / share link. Privat
 SAMPLE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample')
 SAMPLE_NAME = 'Birchline ST-2 demo manual (fictional sample).pdf'
 SAMPLE_BANNER = ('FREE SAMPLE: this PDF was made from the bundled, fictional Birchline ST-2 demo manual, not from a file you '
-                 'uploaded. To remake your own manual, upload it and add your own LLM API key.')
+                 'uploaded. ' + STEP_TEXT + ' ' + STEP_STANDARD + ' ' + KEY_RULE)
 SAMPLE_FOOTER = 'Free sample made from a fictional demo manual (not your upload). Not a certified manual.'
 SAMPLE_NOTE = ('This free sample was made by Manual Remake (Panda Federation) from a short fictional demo manual that ships '
                'with the Actor, using a pre-made rewrite (no AI model was called and nothing was charged). A real remake '
@@ -181,7 +182,8 @@ async def main() -> None:
                 res = await run_pipeline(sources, include_images=include_images,
                                          title='Free sample: ' + (opts['title'] or fixture['title']), checklist=opts['checklistMode'],
                                          paper=opts['paperSize'], rewrite_fn=sample_rewrite, log=Actor.log.info, banner=SAMPLE_BANNER,
-                                         footer=SAMPLE_FOOTER, origin='the bundled sample manual', source_note=SAMPLE_NOTE)
+                                         footer=SAMPLE_FOOTER, origin='the bundled sample manual', source_note=SAMPLE_NOTE,
+                                         sample=True)
             except Exception as e:  # noqa: BLE001
                 Actor.log.exception('Sample failed')
                 return await fail(summary, f'The free sample could not be built ({type(e).__name__}). Please report it in the Issues tab.')
@@ -286,6 +288,9 @@ async def save_outputs(res: dict) -> None:
 
 async def finish_summary(summary: dict, res: dict, event, charged: int, take: str, sample: bool = False) -> None:
     rw = res['rewrite']
+    nav = switch_editions('sample' if sample else res['mode'])
+    if nav not in take:
+        take = f'{take} {nav}'
     summary.update({
         'status': 'succeeded', 'sample': sample, 'edition': 'sample' if sample else res['mode'], 'layout': res['mode'],
         'chargedEvent': event, 'charged': charged, 'modeNote': res['modeNote'], 'sources': res['sources'],
@@ -295,7 +300,8 @@ async def finish_summary(summary: dict, res: dict, event, charged: int, take: st
         'difficulty': rw['difficulty'], 'timeEstimate': rw['timeEstimate'],
         'counts': {'steps': len(rw['steps']), 'parts': len(rw['parts']), 'warnings': len(rw['warnings']), 'gaps': len(rw['gaps']), 'figures': len(res['figures'])},
         'outputs': {'pdf': 'OUTPUT.pdf', 'markdown': 'REMAKE.md', 'rewriteJson': 'REWRITE.json', 'figures': [f'{k}.png' for k in res['figures']]},
-        'takeaway': take[:400], 'finishedAt': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+        'switchEditions': nav,
+        'takeaway': take[:2000], 'finishedAt': datetime.now(timezone.utc).isoformat(timespec='seconds'),
         'disclaimer': 'Rewrite of the uploaded source, not a certified replacement. No standards or compliance certification is claimed.'
                       if not sample else 'Free sample made from a fictional demo manual bundled with the Actor; not a remake of any upload; nothing charged.',
     })

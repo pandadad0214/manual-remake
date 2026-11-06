@@ -15,6 +15,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (CondPageBreak, Image, KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table,
                                 TableStyle)
 
+from .editions import switch_editions
+
 SOURCE_NOTE = ('This document is a rewrite of the file you uploaded, made by Manual Remake (Panda Federation). '
                'It is not an official or certified replacement for the manufacturer\'s manual and makes no safety, '
                'standards or compliance claim. If anything here disagrees with the original, follow the original '
@@ -78,10 +80,11 @@ def _image(png: bytes, max_w: float, max_h: float):
 def build_pdf(rw: dict, figures: dict[str, dict] | None = None, *, mode: str = 'text', mode_note: str = '',
               checklist: bool = True, paper: str = 'letter', source_names: list[str] | None = None,
               banner: str = '', footer: str | None = None, origin: str = 'your upload',
-              source_note: str | None = None) -> bytes:
+              source_note: str | None = None, sample: bool = False) -> bytes:
     """rw: output of rewrite.normalize(). figures: id -> {'png': bytes, 'source': str, 'page': int|None}.
 
     mode 'standard' places the cleaned, numbered pictures; mode 'text' never places pictures.
+    sample: this PDF is the free sample (banner is the usual signal; pass sample=True as well).
     """
     st = _styles()
     figures = figures or {}
@@ -230,6 +233,9 @@ def build_pdf(rw: dict, figures: dict[str, dict] | None = None, *, mode: str = '
     story.append(Spacer(1, 14))
     story.append(_p('About this document', st['h2']))
     story.append(_p(source_note or SOURCE_NOTE, st['small']))
+    story.append(Spacer(1, 8))
+    story.append(_p('Switch editions', st['h2']))
+    story.append(_p(switch_editions('sample' if (sample or banner) else ('standard' if mode == 'standard' else 'text')), st['small']))
 
     def on_page(c, d):
         c.saveState()
@@ -243,10 +249,18 @@ def build_pdf(rw: dict, figures: dict[str, dict] | None = None, *, mode: str = '
     return buf.getvalue()
 
 
-def to_markdown(rw: dict, mode: str, mode_note: str = '', banner: str = '') -> str:
+def to_markdown(rw: dict, mode: str, mode_note: str = '', banner: str = '', *, sample: bool = False,
+                source_note: str | None = None) -> str:
+    is_sample = sample or bool(banner)
+    if is_sample:
+        edition = 'Free sample (no charge; bundled fictional Birchline ST-2 demo; marked FREE SAMPLE)'
+    elif mode == 'standard':
+        edition = 'Standard ($39 per successful run)'
+    else:
+        edition = 'Text-only ($9 per successful run)'
     L = ([f'> **{banner}**', ''] if banner else []) + [f"# {rw['title']}", '', rw.get('productSummary', ''), '',
          f"- Difficulty: {rw['difficulty']}" + (f" ({rw['difficultyReason']})" if rw.get('difficultyReason') else ''),
-         f"- Time (estimate): {rw['timeEstimate']}", f"- Edition: {'Standard' if mode == 'standard' else 'Text-only'}"]
+         f"- Time (estimate): {rw['timeEstimate']}", f"- Edition: {edition}"]
     if mode_note:
         L += ['', f'> {mode_note}']
     if rw['warnings']:
@@ -260,5 +274,6 @@ def to_markdown(rw: dict, mode: str, mode_note: str = '', banner: str = '') -> s
             L.append(f"**Caution:** {s['caution']}")
     if rw['gaps']:
         L += ['', '## Missing or unclear in the source'] + [f"- After step {g['afterStep']}: {g['issue']}" for g in rw['gaps']]
-    L += ['', '---', SOURCE_NOTE]
+    L += ['', '---', source_note or SOURCE_NOTE, '', '## Switch editions',
+          switch_editions('sample' if is_sample else ('standard' if mode == 'standard' else 'text'))]
     return '\n'.join(L) + '\n'
