@@ -111,6 +111,11 @@ def dataset_rows(res: dict) -> list[dict]:
     return rows
 
 
+def _nc(e) -> str:
+    m = str(e)
+    return m if 'charged' in m else f'{m} Nothing was charged.'
+
+
 async def fail(summary: dict, msg: str) -> None:
     summary.update({'status': 'failed', 'charged': 0, 'chargedEvent': None, 'takeaway': msg[:400], 'finishedAt': datetime.now(timezone.utc).isoformat(timespec='seconds')})
     await Actor.set_value('SUMMARY', summary)
@@ -144,7 +149,7 @@ async def main() -> None:
                     name, data = await fetch(client, ref)
                     sources.append(await asyncio.to_thread(make_source, name, data, inp.get('pdfPassword') or None))
         except InputError as e:
-            return await fail(summary, f'{e} Nothing was charged.')
+            return await fail(summary, _nc(e))
 
         cm = Actor.get_charging_manager()
         info = cm.get_pricing_info()
@@ -172,7 +177,7 @@ async def main() -> None:
             res = await run_pipeline(sources, include_images=include_images, title=opts['title'], checklist=opts['checklistMode'],
                                      paper=opts['paperSize'], password=inp.get('pdfPassword') or None, rewrite_fn=rewrite_fn, log=log)
         except InputError as e:
-            return await fail(summary, f'{e} Nothing was charged.')
+            return await fail(summary, _nc(e))
         except Exception as e:  # noqa: BLE001
             Actor.log.exception('Remake failed')
             return await fail(summary, f'The remake failed ({type(e).__name__}: {str(e)[:200]}). Nothing was charged; try again or contact us via the Issues tab.')

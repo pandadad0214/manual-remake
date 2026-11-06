@@ -5,3 +5,4 @@ __pycache__
 .preview
 tests/output_*.pdf
 .pytest_cache
+platform/

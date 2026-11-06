@@ -1,7 +1,7 @@
 {
   "actorSpecification": 1,
   "name": "manual-remake",
-  "title": "Manual Remake: Rewrite Confusing Manuals into a Clear Printable PDF",
+  "title": "Manual Remake: Confusing Manual to Clear Printable PDF",
   "description": "Upload a PDF or photos of a confusing manual; get a clear English print PDF: plain steps, parts list, warnings, difficulty and time, flagged gaps, checklist, and your own pictures cleaned with numbered callouts. Runs on your own OpenAI-compatible key.",
   "version": "0.1",
   "buildTag": "latest",
