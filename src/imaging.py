@@ -90,7 +90,10 @@ def estimate_skew(im: Image.Image, max_angle: float = 15.0, step: float = 0.5) -
     # refine around the best coarse angle
     fine = np.arange(best - step, best + step + 1e-9, step / 5)
     best = max(fine, key=score)
-    return float(round(best, 2)) if abs(best) >= 0.3 else 0.0
+    # photos without straight lines give flat scores: only rotate when the best angle is clearly sharper than none
+    if abs(best) < 0.3 or score(best) < score(0.0) * 1.08:
+        return 0.0
+    return float(round(best, 2))
 
 
 def deskew(im: Image.Image, angle: float | None = None) -> tuple[Image.Image, float]:

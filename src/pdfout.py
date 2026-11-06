@@ -76,7 +76,9 @@ def _image(png: bytes, max_w: float, max_h: float):
 
 
 def build_pdf(rw: dict, figures: dict[str, dict] | None = None, *, mode: str = 'text', mode_note: str = '',
-              checklist: bool = True, paper: str = 'letter', source_names: list[str] | None = None) -> bytes:
+              checklist: bool = True, paper: str = 'letter', source_names: list[str] | None = None,
+              banner: str = '', footer: str | None = None, origin: str = 'your upload',
+              source_note: str | None = None) -> bytes:
     """rw: output of rewrite.normalize(). figures: id -> {'png': bytes, 'source': str, 'page': int|None}.
 
     mode 'standard' places the cleaned, numbered pictures; mode 'text' never places pictures.
@@ -91,9 +93,12 @@ def build_pdf(rw: dict, figures: dict[str, dict] | None = None, *, mode: str = '
     W = size[0] - 1.6 * inch
     story = []
 
+    if banner:
+        story.append(_boxed(_p(banner, ParagraphStyle('ban', parent=st['base'], fontName=_BOLD, textColor=colors.white)), ACCENT, ACCENT))
+        story.append(Spacer(1, 8))
     story.append(_p(rw['title'], st['title']))
     srcs = ', '.join(source_names or [])
-    story.append(_p(f"Remade from your upload{(': ' + srcs) if srcs else ''} by Manual Remake (Panda Federation)", st['sub']))
+    story.append(_p(f"Remade from {origin}{(': ' + srcs) if srcs else ''} by Manual Remake (Panda Federation)", st['sub']))
     if rw.get('productSummary'):
         story.append(_p(rw['productSummary'], st['base']))
         story.append(Spacer(1, 8))
@@ -107,8 +112,10 @@ def build_pdf(rw: dict, figures: dict[str, dict] | None = None, *, mode: str = '
         glance.append([_p('People', st['cellb']), _p(rw['people'], st['cell'])])
     if rw.get('toolsNeeded'):
         glance.append([_p('Tools', st['cellb']), _p(', '.join(rw['toolsNeeded']), st['cell'])])
-    glance.append([_p('Edition', st['cellb']), _p('Standard: text plus your cleaned pictures with numbered callouts' if mode == 'standard'
-                                                  else 'Text-only', st['cell'])])
+    ed = 'Standard: text plus your cleaned pictures with numbered callouts' if mode == 'standard' else 'Text-only'
+    if banner:
+        ed = 'Free sample of the ' + ('Standard layout (text plus cleaned pictures with numbered callouts)' if mode == 'standard' else 'Text-only layout')
+    glance.append([_p('Edition', st['cellb']), _p(ed, st['cell'])])
     t = Table(glance, colWidths=[1.45 * inch, W - 1.45 * inch])
     t.setStyle(TableStyle([('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#BBBBBB')), ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#EEF3F8')),
                            ('VALIGN', (0, 0), (-1, -1), 'TOP')]))
@@ -156,7 +163,7 @@ def build_pdf(rw: dict, figures: dict[str, dict] | None = None, *, mode: str = '
         meta = figures[fid]
         where = meta.get('source', '') + (f", page {meta['page']}" if meta.get('page') else '')
         steps = ', '.join(str(s) for s in f['steps'])
-        cap = f"Figure {fig_no[fid]}" + (f": {f['caption']}" if f['caption'] else '') + (f". Red numbers match step {steps}." if steps else '.') + f" From your upload ({where})."
+        cap = f"Figure {fig_no[fid]}" + (f": {f['caption']}" if f['caption'] else '') + (f". Red numbers match step {steps}." if steps else '.') + f" From {origin} ({where})."
         return KeepTogether([_image(meta['png'], W, 4.2 * inch), Spacer(1, 3), _p(cap, st['cap'])])
 
     linked = {fid for s_ in rw['steps'] for fid in s_['figures']}
@@ -164,7 +171,7 @@ def build_pdf(rw: dict, figures: dict[str, dict] | None = None, *, mode: str = '
     if rest:  # pictures not tied to a step (often the parts overview) go right after the parts list
         for i, fid in enumerate(rest):
             placed.add(fid)
-            story.append(KeepTogether([_p('Pictures from your upload', st['h2']), fig_flow(fid)]) if i == 0 else fig_flow(fid))
+            story.append(KeepTogether([_p(f'Pictures from {origin}', st['h2']), fig_flow(fid)]) if i == 0 else fig_flow(fid))
 
     story.append(PageBreak())
     story.append(_p('Steps', st['h2']))
@@ -222,13 +229,13 @@ def build_pdf(rw: dict, figures: dict[str, dict] | None = None, *, mode: str = '
 
     story.append(Spacer(1, 14))
     story.append(_p('About this document', st['h2']))
-    story.append(_p(SOURCE_NOTE, st['small']))
+    story.append(_p(source_note or SOURCE_NOTE, st['small']))
 
     def on_page(c, d):
         c.saveState()
         c.setFont(_FONT, 7.5)
         c.setFillColor(colors.HexColor('#666666'))
-        c.drawString(0.8 * inch, 0.5 * inch, FOOTER)
+        c.drawString(0.8 * inch, 0.5 * inch, footer or FOOTER)
         c.drawRightString(size[0] - 0.8 * inch, 0.5 * inch, f'Page {d.page}')
         c.restoreState()
 
@@ -236,8 +243,8 @@ def build_pdf(rw: dict, figures: dict[str, dict] | None = None, *, mode: str = '
     return buf.getvalue()
 
 
-def to_markdown(rw: dict, mode: str, mode_note: str = '') -> str:
-    L = [f"# {rw['title']}", '', rw.get('productSummary', ''), '',
+def to_markdown(rw: dict, mode: str, mode_note: str = '', banner: str = '') -> str:
+    L = ([f'> **{banner}**', ''] if banner else []) + [f"# {rw['title']}", '', rw.get('productSummary', ''), '',
          f"- Difficulty: {rw['difficulty']}" + (f" ({rw['difficultyReason']})" if rw.get('difficultyReason') else ''),
          f"- Time (estimate): {rw['timeEstimate']}", f"- Edition: {'Standard' if mode == 'standard' else 'Text-only'}"]
     if mode_note:

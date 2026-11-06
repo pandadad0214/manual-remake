@@ -1,0 +1,185 @@
+{
+ "title": "Birchline ST-2 Side Table: Assembly Instructions",
+ "productSummary": "A small two-shelf side table with a top panel, a shelf and four legs. These steps cover assembly and basic care.",
+ "difficulty": "Easy",
+ "difficultyReason": "Five short steps with one hand tool; turning the table over needs a second person.",
+ "timeEstimate": "20-30 minutes",
+ "people": "1 person, 2 people for the last step",
+ "toolsNeeded": [
+  "Allen key (E, included)"
+ ],
+ "parts": [
+  {
+   "id": "A",
+   "name": "Top panel",
+   "quantity": "1",
+   "notes": ""
+  },
+  {
+   "id": "B",
+   "name": "Shelf",
+   "quantity": "1",
+   "notes": ""
+  },
+  {
+   "id": "C",
+   "name": "Leg",
+   "quantity": "4",
+   "notes": ""
+  },
+  {
+   "id": "D",
+   "name": "Screw",
+   "quantity": "8",
+   "notes": "Size not given in the source"
+  },
+  {
+   "id": "E",
+   "name": "Allen key",
+   "quantity": "1",
+   "notes": ""
+  }
+ ],
+ "warnings": [
+  {
+   "text": "Keep the screws (D) away from children. They are a choking hazard.",
+   "sourceRef": "page 1"
+  },
+  {
+   "text": "Do not stand on the table. See the product label for the shelf's maximum load.",
+   "sourceRef": "page 1"
+  }
+ ],
+ "steps": [
+  {
+   "number": 1,
+   "title": "Lay the top face down",
+   "instructions": [
+    "Put a soft cover on the floor, such as a carpet or the flattened box.",
+    "Lay top panel A on it, upside down, so it does not get scratched."
+   ],
+   "parts": [
+    "A x1"
+   ],
+   "tools": [],
+   "caution": "",
+   "figures": [],
+   "sourceRef": "page 2"
+  },
+  {
+   "number": 2,
+   "title": "Attach the first leg",
+   "instructions": [
+    "Place one leg C in a corner hole of top panel A.",
+    "Fix it with screw D using Allen key E. Turn clockwise.",
+    "Do not fully tighten yet."
+   ],
+   "parts": [
+    "C x1",
+    "D"
+   ],
+   "tools": [
+    "Allen key E"
+   ],
+   "caution": "",
+   "figures": [
+    "fig-2"
+   ],
+   "sourceRef": "page 2"
+  },
+  {
+   "number": 3,
+   "title": "Attach the other three legs",
+   "instructions": [
+    "Repeat step 2 for the other three legs C."
+   ],
+   "parts": [
+    "C x3",
+    "D"
+   ],
+   "tools": [
+    "Allen key E"
+   ],
+   "caution": "",
+   "figures": [
+    "fig-2"
+   ],
+   "sourceRef": "page 2"
+  },
+  {
+   "number": 5,
+   "title": "Tighten all screws",
+   "instructions": [
+    "Tighten all screws D fully with Allen key E."
+   ],
+   "parts": [
+    "D"
+   ],
+   "tools": [
+    "Allen key E"
+   ],
+   "caution": "",
+   "figures": [],
+   "sourceRef": "page 3"
+  },
+  {
+   "number": 6,
+   "title": "Stand the table up",
+   "instructions": [
+    "With two people, turn the table over and stand it on its legs.",
+    "Check that it does not wobble."
+   ],
+   "parts": [],
+   "tools": [],
+   "caution": "Use two people to turn the table over.",
+   "figures": [],
+   "sourceRef": "page 3"
+  }
+ ],
+ "gaps": [
+  {
+   "afterStep": 3,
+   "issue": "The source has no step 4. Shelf B is in the parts list but no step says how or when to fit it.",
+   "suggestion": "Check the pictures on the box or ask the seller before tightening the screws"
+  },
+  {
+   "afterStep": 5,
+   "issue": "The source does not say how tight the screws should be.",
+   "suggestion": "Tighten firmly by hand with the key; do not use a power drill unless the seller says so"
+  }
+ ],
+ "figures": [
+  {
+   "id": "fig-1",
+   "caption": "Parts A to E",
+   "use": true,
+   "steps": [],
+   "callouts": []
+  },
+  {
+   "id": "fig-2",
+   "caption": "Fitting a leg to the top panel",
+   "use": true,
+   "steps": [
+    2,
+    3
+   ],
+   "callouts": [
+    {
+     "step": 2,
+     "x": 0.2,
+     "y": 0.18
+    },
+    {
+     "step": 3,
+     "x": 0.8,
+     "y": 0.18
+    }
+   ]
+  }
+ ],
+ "notes": [
+  "Clean with a dry cloth. Do not use strong cleaners.",
+  "Check the screws every 3 months and re-tighten them."
+ ]
+}

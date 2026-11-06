@@ -106,8 +106,20 @@ def normalize(raw: dict, figure_ids: list[str] | None = None, title_override: st
         k = _num(v)
         if k is None:
             return None
+        if renum and k not in renum:
+            return None                       # refers to a step the rewrite does not have: drop, never guess
         k = renum.get(k, k)
         return k if 1 <= k <= n_steps else None
+
+    def map_after(v):
+        """Gap position: after the new step that replaced old step v, or after the last step before a missing number."""
+        a = _num(v)
+        if a is None or a <= 0 or not n_steps:
+            return 0
+        if a in renum:
+            return renum[a]
+        earlier = [new for old, new in renum.items() if old < a]
+        return max(earlier) if earlier else min(a, n_steps)
 
     parts = []
     for p in raw.get('parts') or []:
@@ -130,9 +142,7 @@ def normalize(raw: dict, figure_ids: list[str] | None = None, title_override: st
             g = {'issue': g}
         if not isinstance(g, dict) or not _scrub(g.get('issue')):
             continue
-        a = _num(g.get('afterStep'))
-        a = 0 if a is None or a <= 0 else (renum.get(a, a) if renum.get(a, a) <= n_steps else n_steps)
-        gaps.append({'afterStep': a, 'issue': _scrub(g.get('issue')), 'suggestion': _scrub(g.get('suggestion'))})
+        gaps.append({'afterStep': map_after(g.get('afterStep')), 'issue': _scrub(g.get('issue')), 'suggestion': _scrub(g.get('suggestion'))})
     figures = []
     for f in raw.get('figures') or []:
         if not isinstance(f, dict):

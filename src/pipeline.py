@@ -52,7 +52,11 @@ def llm_images(ex: Extracted, prepared: dict[str, dict]) -> list[tuple[str, str,
 
 async def run_pipeline(sources: list[Source], *, include_images: bool = True, title: str | None = None,
                        checklist: bool = True, paper: str = 'letter', password: str | None = None,
-                       rewrite_fn: Callable[[list[dict]], Awaitable[dict]], log=print) -> dict:
+                       rewrite_fn: Callable[[list[dict]], Awaitable[dict]], log=print,
+                       before_rewrite: Callable[[str], Awaitable[None]] | None = None, banner: str = '',
+                       footer: str | None = None, origin: str = 'your upload', source_note: str | None = None) -> dict:
+    """before_rewrite(planned_mode) runs after extraction and before the model call (e.g. a max-charge check).
+    banner: shown at the top of the PDF and Markdown (used for the free sample). footer: overrides the page footer."""
     check_cap(sources)
     units = count_units(sources)
     ex = extract(sources, want_images=include_images, password=password)
@@ -64,6 +68,8 @@ async def run_pipeline(sources: list[Source], *, include_images: bool = True, ti
     log(f'{units} page(s)/image(s); {len(text_pages)} with a text layer, {len(ex.scanPages)} to read from pictures; '
         f'{len(prepared)} usable picture(s); {len(ex.hiddenRemoved)} hidden/AI-directed text item(s) removed; mode={mode}')
 
+    if before_rewrite is not None:
+        await before_rewrite(mode)
     messages = build_messages(ex.pages, llm_images(ex, prepared))
     raw = await rewrite_fn(messages)
     rw = normalize(raw, list(prepared.keys()), title)
@@ -86,9 +92,10 @@ async def run_pipeline(sources: list[Source], *, include_images: bool = True, ti
             mode, note = 'text', NOTE_NO_STEP_IMAGES
 
     names = [s.name for s in sources]
-    pdf = build_pdf(rw, figures_out, mode=mode, mode_note=note, checklist=checklist, paper=paper, source_names=names)
+    pdf = build_pdf(rw, figures_out, mode=mode, mode_note=note, checklist=checklist, paper=paper, source_names=names,
+                    banner=banner, footer=footer, origin=origin, source_note=source_note)
     return {
-        'mode': mode, 'modeNote': note, 'rewrite': rw, 'pdf': pdf, 'markdown': to_markdown(rw, mode, note),
+        'mode': mode, 'modeNote': note, 'rewrite': rw, 'pdf': pdf, 'markdown': to_markdown(rw, mode, note, banner),
         'figures': figures_out, 'figureRecords': fig_records, 'units': units, 'sources': names,
         'textPages': len(text_pages), 'scanPages': len(ex.scanPages), 'usablePictures': len(prepared),
         'skippedImages': ex.skippedImages, 'hiddenRemoved': ex.hiddenRemoved,

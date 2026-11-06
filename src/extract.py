@@ -15,11 +15,17 @@ from . import imaging
 PAGE_CAP = 15
 IMAGE_EXT = ('.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.tif', '.tiff')
 ZERO_WIDTH = re.compile('[\u200b-\u200f\u2028-\u202e\u2060-\u2064\ufeff\U000e0000-\U000e007f]')
+# Lines that address an AI system. Kept narrow on purpose so real manual text ("use a mild cleaning agent; you must
+# rinse", "ignore the previous hole") is never dropped: the phrase has to be about instructions/prompts or speak to an AI.
+_AI = r'(?:ai|a\.i\.|llm|large language model|language model|chatbot|chat ?gpt|gpt-?\d*|claude|gemini|copilot|ai (?:assistant|agent|model|system))'
 AI_DIRECTED = re.compile(
-    r'(ignore|disregard|forget|override)\b.{0,40}\b(instruction|prompt|rule|previous|above|prior)'
-    r'|\b(system prompt|developer message|jailbreak)\b'
-    r'|\b(ai|a\.i\.|llm|language model|assistant|chatbot|gpt|claude|gemini|agent)s?\b.{0,60}\b(must|should|are instructed|you are|always|never|please|do not|don\'t)\b'
-    r'|\b(note|message|instructions?) (to|for) (the )?(ai|llm|assistant|model|agent)s?\b',
+    r'\b(?:ignore|disregard|forget|override)\s+(?:all\s+|any\s+)?(?:of\s+)?(?:the\s+|your\s+)?(?:previous|prior|above|earlier|system|original)\s+'
+    r'(?:instructions?|prompts?|rules|directions|guidelines)'
+    r'|\b(?:system prompt|developer message|jailbreak|prompt injection)\b'
+    r'|\b(?:note|message|instructions?)\s+(?:to|for)\s+(?:the\s+|any\s+)?(?:ai|llm|assistant|model|agent|chatbot|language model)s?\b'
+    r'|\byou are (?:an?|the) (?:ai|language model|llm|assistant|chatbot)\b'
+    r'|(?:^|[\s(\[])(?:dear\s+)?' + _AI + r's?\s*[:,]\s'
+    r'|\b' + _AI + r's?\s+(?:reading|parsing|processing|summari[sz]ing|rewriting) (?:this|these)\b',
     re.I)
 
 
@@ -121,7 +127,7 @@ def clean_line(s: str) -> str:
 
 def page_text(page, page_no: int, source: str, hidden: list[dict]) -> str:
     """Visible text of one page. Hidden or AI-directed text is dropped and logged in `hidden`."""
-    st = {'tr': 0, 'fill': 0.0, 'stack': []}
+    st = {'tr': 0, 'fill': 0.0, 'stack': [], 'darkFill': False, 'image': False}
     try:
         box = page.mediabox
         W, H = float(box.width), float(box.height)
@@ -147,6 +153,10 @@ def page_text(page, page_no: int, source: str, hidden: list[dict]) -> str:
                 st['fill'] = 1.0 - max(float(a) for a in args[:4])
             elif o in ('sc', 'scn') and len(args) in (1, 3):
                 st['fill'] = min(float(a) for a in args)
+            elif o in ('f', 'F', 'f*', 'B', 'B*', 'b', 'b*') and st['fill'] < 0.85:
+                st['darkFill'] = True          # a coloured box was painted: white text may sit on it (warning banners)
+            elif o == 'Do':
+                st['image'] = True             # an image was drawn: invisible text is likely an OCR layer
         except (TypeError, ValueError, IndexError):
             pass
 
@@ -158,9 +168,9 @@ def page_text(page, page_no: int, source: str, hidden: list[dict]) -> str:
         eff = abs(size * (m[3] if m[3] else m[0])) if size else 10
         x, y = m[4], m[5]
         why = None
-        if st['tr'] == 3:
+        if st['tr'] == 3 and not st['image']:
             why = 'invisible text'
-        elif st['fill'] >= 0.94:
+        elif st['fill'] >= 0.94 and st['tr'] != 3 and not st['darkFill']:
             why = 'white text'
         elif 0 < eff < 2.0:
             why = 'microscopic text'

@@ -3,17 +3,24 @@
   "type": "object",
   "schemaVersion": 1,
   "properties": {
+    "sampleMode": {
+      "title": "Free sample (no upload, no key, no charge)",
+      "type": "boolean",
+      "editor": "checkbox",
+      "default": false,
+      "description": "Turn on to get a free sample PDF made from a short fictional demo manual that ships with the Actor (no model key needed, nothing charged). Your own files are not processed while this is on. The sample also runs automatically when no files or links are given."
+    },
     "files": {
       "title": "Manual files",
       "type": "array",
       "editor": "fileupload",
-      "description": "Upload the manual: one PDF, several PDFs, or photos of the pages (JPEG, PNG, WebP). Up to 15 pages or photos per run in total (PDF pages + extra photos). Over 15, the run stops with a message and nothing is charged."
+      "description": "Upload the manual: one PDF, several PDFs, or photos of the pages (JPEG, PNG, WebP). Up to 15 pages or photos per run in total (PDF pages + extra photos). Over 15, the run stops with a message and nothing is charged. Leave empty (and links empty) for the free sample."
     },
     "fileUrls": {
       "title": "Manual links",
       "type": "array",
       "editor": "stringList",
-      "description": "Or paste direct links to the PDF or photos. Google Drive and Dropbox share links are converted to direct downloads. Up to 50 MB per file."
+      "description": "Or paste direct public links (or share links) to the PDF or photos. Google Drive and Dropbox share links are converted to direct downloads. Up to 50 MB per file. Private Apify storage links do not work (the Actor runs with limited permissions): use the upload box instead."
     },
     "includeImages": {
       "title": "Reuse and clean pictures (Standard edition)",
@@ -39,8 +46,14 @@
       "title": "Paper size",
       "type": "string",
       "editor": "select",
-      "enum": ["letter", "a4"],
-      "enumTitles": ["US Letter", "A4"],
+      "enum": [
+        "letter",
+        "a4"
+      ],
+      "enumTitles": [
+        "US Letter",
+        "A4"
+      ],
       "default": "letter",
       "description": "Page size of the print PDF."
     },
@@ -50,7 +63,7 @@
       "editor": "textfield",
       "isSecret": true,
       "sectionCaption": "Rewrite model (your own key)",
-      "description": "Required. Your own OpenAI API key (or a key for another OpenAI-compatible provider, with the base URL below). The rewrite runs on your key, so model usage is billed by your provider, not by this Actor. The key is stored encrypted by Apify and is never logged or saved in the output."
+      "description": "Required to remake your own manual (not needed for the free sample). Your own OpenAI API key, or a key for another OpenAI-compatible provider with the base URL below. The rewrite runs on your key, so model usage is billed by your provider, not by this Actor. The key is stored encrypted by Apify and is never logged or saved in the output."
     },
     "llmModel": {
       "title": "LLM model",
@@ -63,7 +76,7 @@
       "title": "LLM base URL",
       "type": "string",
       "editor": "textfield",
-      "description": "Optional. Leave empty for OpenAI (https://api.openai.com/v1). For another OpenAI-compatible provider, paste its base URL ending in /v1."
+      "description": "Optional. Leave empty for OpenAI (https://api.openai.com/v1). For another OpenAI-compatible provider, paste its https base URL ending in /v1."
     },
     "pdfPassword": {
       "title": "PDF password",
@@ -72,6 +85,5 @@
       "isSecret": true,
       "description": "Optional. Only for password-protected PDFs you are allowed to open."
     }
-  },
-  "required": ["llmApiKey"]
+  }
 }

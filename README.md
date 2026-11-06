@@ -8,11 +8,20 @@ This is a rewrite of the file you upload. It is not an official or certified rep
 
 Manual Remake runs as an Apify Actor (publishing soon at `apify.com/pandadad0214/manual-remake`). There is nothing to install.
 
-1. Open the Actor and click **Try for free** / **Start**.
-2. Upload the manual in **Manual files** (PDF or photos of the pages), or paste direct links in **Manual links**.
-3. Paste your **LLM API key** (OpenAI, or any OpenAI-compatible provider with **LLM base URL**). The rewrite runs on your key, so model usage is billed by your provider. The key is stored encrypted and never logged.
-4. Leave **Reuse and clean pictures** on for the Standard edition, or turn it off for a Text-only edition.
-5. Click **Start**, then download **OUTPUT.pdf** from the run's **Output** tab (or **Storage → Key-value store**).
+### Free sample (no upload, no key, no charge)
+
+Click **Start** with no files (or tick **Free sample**) and you get a real remade PDF of a short, fictional demo manual (the "Birchline ST-2 side table") that ships with the Actor. It shows the full layout: at-a-glance box, warnings, parts list, plain-English steps, flagged gaps, cleaned pictures with numbered markers and the checklist. The sample uses a pre-made rewrite, so no AI model is called, no key is needed and nothing is charged. The PDF and the run summary are clearly marked **FREE SAMPLE**: it is never presented as a remake of your file.
+
+### Remake your own manual (paid)
+
+1. Upload the manual in **Manual files** (PDF or photos of the pages), or paste direct public or share links in **Manual links**.
+2. Paste your **LLM API key** (OpenAI, or any OpenAI-compatible provider with an https **LLM base URL**). Your own manual is always rewritten with your own key, so model usage is billed by your provider. The key is stored encrypted and never logged. If you upload files without a key, the run stops and asks for one; it never swaps in the demo.
+3. Leave **Reuse and clean pictures** on for the Standard edition, or turn it off for a Text-only edition.
+4. Click **Start**, then download **OUTPUT.pdf** from the run's **Output** tab (or **Storage → Key-value store**).
+
+**Supported inputs:** files uploaded in the **Manual files** box, and direct public links (including Google Drive and Dropbox share links). Links to private Apify storage do not work, because the Actor runs with limited permissions and cannot read other stores in your account; upload the file instead.
+
+**Model provider errors:** if your provider says the key is wrong, the model does not exist, or the account has no credit left (`insufficient_quota`), the run stops with that message and nothing is charged. Add credit or fix the key with your provider and run again.
 
 ### Pricing (pay per successful run)
 
@@ -24,9 +33,14 @@ Manual Remake runs as an Apify Actor (publishing soon at `apify.com/pandadad0214
 - You are charged once, only when the remade PDF is delivered.
 - If your upload has no usable pictures (or you turn pictures off), the run is Text-only and priced as Text-only. The PDF and the run summary say so.
 - Up to **15 pages or photos per run** (PDF pages plus extra photos; pictures inside a PDF page are not counted twice). Over 15, the run stops with a clear message and nothing is charged. Split longer manuals into several runs.
-- Refused or failed runs cost nothing.
+- Refused or failed runs cost nothing, and the free sample is always free.
+- If your **Maximum cost per run** is below the edition's price, the run stops before calling your model, so you do not spend model credit on a remake that cannot be delivered.
 
-### Input example
+### Input examples
+
+Free sample: `{}` or `{"sampleMode": true}`
+
+Your own manual:
 
 ```json
 {
@@ -58,12 +72,12 @@ Manual Remake runs as an Apify Actor (publishing soon at `apify.com/pandadad0214
 | `REMAKE.md` | The same content as Markdown |
 | `REWRITE.json` | Structured rewrite (steps, parts, warnings, gaps, figures) |
 | `fig-N.png` | Each cleaned picture with its numbered markers (Standard) |
-| `SUMMARY` | Edition, counts, pictures used or skipped and why, hidden text removed, one-line `takeaway` |
-| Dataset (overview view) | One row per warning, part, step, gap and picture |
+| `SUMMARY` | Edition (`sample`, `text` or `standard`), `sample` flag, counts, pictures used or skipped and why, hidden text removed, what was charged, one-line `takeaway` |
+| Dataset (overview view) | An overview row, then one row per warning, part, step, gap and picture, each with a one-line `summary` |
 
 ### Hidden text in uploads
 
-Some PDFs carry text people cannot see (white, microscopic, invisible or off-page text) or lines aimed at AI tools ("ignore previous instructions..."). Manual Remake removes that text before the rewrite, tells the model to ignore any that slips through, never copies it into the output, and reports how many items were removed in `SUMMARY`.
+Some PDFs carry text people cannot see (white, microscopic, invisible or off-page text) or lines aimed at AI tools ("ignore previous instructions..."). Manual Remake removes that text before the rewrite (white text on a coloured warning banner and the invisible text layer of scanned PDFs are kept, because those are real content), tells the model to ignore any that slips through, never copies it into the output, and reports how many items were removed in `SUMMARY`.
 
 ### Good to know
 
@@ -84,7 +98,7 @@ Python 3.13 Actor (`apify/actor-python`). The pipeline is split so every stage e
 | `src/rewrite.py` | Prompt, OpenAI-compatible call on the user's key, and `normalize()` (renumbers steps, re-maps callouts, drops dangling references and AI-directed text) |
 | `src/pdfout.py` | reportlab print PDF and Markdown |
 | `src/pipeline.py` | Ties it together with an injectable `rewrite_fn` |
-| `src/main.py` | Apify input, downloads, pay-per-event charging (`text-remake` / `standard-remake`, once per successful run), outputs |
+| `src/main.py` | Apify input, free sample mode, downloads, max-charge check before the model call, pay-per-event charging (`text-remake` / `standard-remake`, once per successful run, only after `OUTPUT.pdf` is saved), outputs |
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -r requirements.txt pytest
@@ -92,7 +106,7 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt pytest
 .venv/bin/python -m pytest -q tests           # no model calls; uses tests/fixtures/rewrite_fixture.json
 ```
 
-The sample manual in `tests/fixtures` is fictional and was written for this repo, including its drawings and a planted hidden line used to test the hidden-text filter.
+The free sample is bundled in `src/sample/` (the fictional manual and its pre-made rewrite); `tests/fixtures` holds the same manual plus a test-only rewrite. The sample manual is fictional and was written for this repo, including its drawings and a planted hidden line used to test the hidden-text filter.
 
 Issues and ideas: open an issue on this repo.
 

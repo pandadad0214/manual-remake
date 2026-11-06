@@ -13,12 +13,23 @@ from urllib.parse import unquote, urlparse
 import httpx
 from apify import Actor
 
-from .extract import PAGE_CAP, InputError, make_source
+from .extract import PAGE_CAP, InputError, check_cap, make_source
 from .pipeline import run_pipeline
 from .rewrite import DEFAULT_MODEL, call_llm
 
 EV_TEXT, EV_STANDARD = 'text-remake', 'standard-remake'
 MAX_BYTES = 50 * 1024 * 1024
+HINT_403 = (' Use the "Manual files" upload box or a public / share link. Private Apify storage links do not work because '
+            'the Actor runs with limited permissions.')
+SAMPLE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample')
+SAMPLE_NAME = 'Birchline ST-2 demo manual (fictional sample).pdf'
+SAMPLE_BANNER = ('FREE SAMPLE: this PDF was made from the bundled, fictional Birchline ST-2 demo manual, not from a file you '
+                 'uploaded. To remake your own manual, upload it and add your own LLM API key.')
+SAMPLE_FOOTER = 'Free sample made from a fictional demo manual (not your upload). Not a certified manual.'
+SAMPLE_NOTE = ('This free sample was made by Manual Remake (Panda Federation) from a short fictional demo manual that ships '
+               'with the Actor, using a pre-made rewrite (no AI model was called and nothing was charged). A real remake '
+               'rewrites your own upload with your own model key. Remakes are rewrites of the uploaded source, not official '
+               'or certified replacements, and make no safety, standards or compliance claim.')
 UA = 'Mozilla/5.0 (compatible; PandaFederation-ManualRemake/0.1; +https://apify.com/pandadad0214)'
 
 
@@ -31,6 +42,11 @@ def norm_url(u: str) -> str:
     if m:
         return f'https://www.dropbox.com/{m.group(1)}?dl=1'
     return u
+
+
+def show_url(u: str) -> str:
+    """URL for messages and logs: no query string (signed links carry a signature there), max 100 chars."""
+    return re.sub(r'[?#].*$', '', u)[:100]
 
 
 def collect_refs(inp: dict) -> list[str]:
@@ -46,8 +62,11 @@ def collect_refs(inp: dict) -> list[str]:
 async def fetch(client: httpx.AsyncClient, ref: str) -> tuple[str, bytes]:
     if not ref.startswith(('http://', 'https://')):
         store_id, _, key = ref.rpartition('/')
-        store = await Actor.open_key_value_store(id=store_id) if store_id else await Actor.open_key_value_store()
-        data = await store.get_value(key)
+        try:
+            store = await Actor.open_key_value_store(id=store_id) if store_id else await Actor.open_key_value_store()
+            data = await store.get_value(key)
+        except Exception as e:  # noqa: BLE001  (limited permissions: other stores in the account are not readable)
+            raise InputError(f'Could not read "{key}" from key-value store "{store_id or "default"}" ({type(e).__name__}).' + HINT_403) from e
         if data is None:
             raise InputError(f'File "{key}" was not found in key-value store "{store_id or "default"}".')
         if isinstance(data, str):
@@ -67,17 +86,17 @@ async def fetch(client: httpx.AsyncClient, ref: str) -> tuple[str, bytes]:
                 headers.pop('Authorization')
                 raise httpx.HTTPStatusError('retry', request=r.request, response=r)
             if r.status_code >= 400:
-                raise InputError(f'Download failed for {url[:120]}: HTTP {r.status_code}.')
+                raise InputError(f'Download failed for {show_url(url)}: HTTP {r.status_code}.' + (HINT_403 if r.status_code in (401, 403) else ''))
             async for chunk in r.aiter_bytes(1 << 16):
                 buf += chunk
                 if len(buf) > MAX_BYTES:
-                    raise InputError(f'{url[:120]} is larger than 50 MB.')
+                    raise InputError(f'{show_url(url)} is larger than 50 MB.')
             cd = r.headers.get('content-disposition', '')
             final = str(r.url)
     except httpx.HTTPStatusError:
         return await fetch_plain(client, url, headers)
     except httpx.HTTPError as e:
-        raise InputError(f'Could not download {url[:120]} ({type(e).__name__}).') from e
+        raise InputError(f'Could not download {show_url(url)} ({type(e).__name__}).') from e
     m = re.search(r'filename\*?=(?:UTF-8\'\')?"?([^";]+)', cd)
     name = unquote(m.group(1)) if m else unquote(os.path.basename(urlparse(final).path)) or 'upload'
     return name[:120], bytes(buf)
@@ -86,9 +105,9 @@ async def fetch(client: httpx.AsyncClient, ref: str) -> tuple[str, bytes]:
 async def fetch_plain(client, url, headers):
     r = await client.get(url, headers=headers)
     if r.status_code >= 400:
-        raise InputError(f'Download failed for {url[:120]}: HTTP {r.status_code}.')
+        raise InputError(f'Download failed for {show_url(url)}: HTTP {r.status_code}.' + (HINT_403 if r.status_code in (401, 403) else ''))
     if len(r.content) > MAX_BYTES:
-        raise InputError(f'{url[:120]} is larger than 50 MB.')
+        raise InputError(f'{show_url(url)} is larger than 50 MB.')
     return (unquote(os.path.basename(urlparse(str(r.url)).path)) or 'upload')[:120], r.content
 
 
@@ -106,6 +125,11 @@ def dataset_rows(res: dict) -> list[dict]:
     for f in res['figureRecords']:
         rows.append({'type': 'figure', 'number': None, 'title': f['id'], 'text': f['caption'], 'figureKey': f"{f['id']}.png",
                      'figureSteps': f['steps'], 'deskewDegrees': f['deskewDegrees'], 'sourceRef': f['source'] + (f", page {f['page']}" if f['page'] else '')})
+    overview = {'type': 'overview', 'number': None, 'title': rw['title'],
+                'text': f"{'Free sample' if res.get('sample') else ('Standard' if res['mode'] == 'standard' else 'Text-only')} edition; "
+                        f"difficulty {rw['difficulty']}; time {rw['timeEstimate']}; {len(rw['steps'])} steps, {len(rw['parts'])} parts, "
+                        f"{len(rw['warnings'])} warnings, {len(rw['gaps'])} gaps. PDF: OUTPUT.pdf", 'sourceRef': ', '.join(res['sources'])}
+    rows.insert(0, overview)
     for r in rows:
         r['summary'] = f"{r['type']}{' ' + str(r['number']) if r['number'] is not None else ''}: {r['title']} | {r['text'][:160]}"
     return rows
@@ -128,18 +152,55 @@ async def main() -> None:
         inp = await Actor.get_input() or {}
         summary = {'startedAt': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'pageCap': PAGE_CAP}
         refs = collect_refs(inp)
-        if not refs:
-            return await fail(summary, 'No manual to remake: add a PDF or photos in "Manual files" or a direct link in "Manual links", then run again. Nothing was charged.')
-        api_key = (inp.get('llmApiKey') or '').strip()
-        if not api_key:
-            return await fail(summary, 'Missing "LLM API key": the rewrite runs on your own OpenAI-compatible key (it is stored encrypted and never logged). Nothing was charged.')
+        sample = bool(inp.get('sampleMode')) or not refs
+        api_key = '' if sample else str(inp.get('llmApiKey') or '').strip()
         model = (inp.get('llmModel') or DEFAULT_MODEL).strip()
         base = (inp.get('llmBaseUrl') or '').strip() or None
         include_images = inp.get('includeImages', True) is not False
-        opts = {'includeImages': include_images, 'checklistMode': inp.get('checklistMode', True) is not False,
-                'paperSize': 'a4' if str(inp.get('paperSize', 'letter')).lower() == 'a4' else 'letter', 'llmModel': model,
-                'llmBaseUrl': 'custom' if base else 'default (OpenAI)', 'title': (inp.get('title') or '').strip() or None}
+        opts = {'sampleMode': sample, 'includeImages': include_images, 'checklistMode': inp.get('checklistMode', True) is not False,
+                'paperSize': 'a4' if str(inp.get('paperSize', 'letter')).lower() == 'a4' else 'letter',
+                'llmModel': None if sample else model, 'llmBaseUrl': None if sample else ('custom' if base else 'default (OpenAI)'),
+                'title': (inp.get('title') or '').strip() or None}
         summary['options'] = opts
+        if not sample and base and not re.match(r'^(https://|http://(localhost|127\.0\.0\.1)[:/])', base):
+            return await fail(summary, '"LLM base URL" must start with https:// so your key is never sent unencrypted '
+                                       '(for example https://api.openai.com/v1). Nothing was charged.')
+
+        if sample:
+            if refs:
+                Actor.log.warning('Free sample mode is on: your files/links were NOT processed. Turn "Free sample" off to remake them.')
+                summary['ignoredInputs'] = len(refs)
+            sources = [make_source(SAMPLE_NAME, open(os.path.join(SAMPLE_DIR, 'sample_manual.pdf'), 'rb').read())]
+            fixture = json.load(open(os.path.join(SAMPLE_DIR, 'sample_rewrite.json')))
+
+            async def sample_rewrite(messages):
+                return fixture
+
+            await Actor.set_status_message('Making the free sample from the bundled demo manual (no model call, no charge)...')
+            try:
+                res = await run_pipeline(sources, include_images=include_images,
+                                         title='Free sample: ' + (opts['title'] or fixture['title']), checklist=opts['checklistMode'],
+                                         paper=opts['paperSize'], rewrite_fn=sample_rewrite, log=Actor.log.info, banner=SAMPLE_BANNER,
+                                         footer=SAMPLE_FOOTER, origin='the bundled sample manual', source_note=SAMPLE_NOTE)
+            except Exception as e:  # noqa: BLE001
+                Actor.log.exception('Sample failed')
+                return await fail(summary, f'The free sample could not be built ({type(e).__name__}). Please report it in the Issues tab.')
+            res['sample'] = True
+            await save_outputs(res)
+            take = (f"FREE SAMPLE (not your upload): remake of the bundled fictional Birchline ST-2 demo manual, "
+                    f"{'Standard' if res['mode'] == 'standard' else 'Text-only'} layout. Download OUTPUT.pdf. Nothing was charged. "
+                    'To remake your own manual, upload it and add your own LLM API key.')
+            await finish_summary(summary, res, None, 0, take, sample=True)
+            await Actor.set_status_message(take[:300])
+            return
+
+        if len(refs) > PAGE_CAP:
+            return await fail(summary, f'This run has {len(refs)} files/links; the limit is {PAGE_CAP} pages or photos per run. '
+                                       'Nothing was downloaded, processed or charged. Split the manual into several runs.')
+        if not api_key:
+            return await fail(summary, 'Missing "LLM API key": your own manual is rewritten with your own OpenAI-compatible key '
+                                       '(stored encrypted, never logged). Add it and run again, or turn on "Free sample" to see a demo. '
+                                       'Your files were not processed and nothing was charged.')
 
         await Actor.set_status_message(f'Downloading {len(refs)} file(s)...')
         sources = []
@@ -148,53 +209,47 @@ async def main() -> None:
                 for ref in refs:
                     name, data = await fetch(client, ref)
                     sources.append(await asyncio.to_thread(make_source, name, data, inp.get('pdfPassword') or None))
+            check_cap(sources)
         except InputError as e:
             return await fail(summary, _nc(e))
 
         cm = Actor.get_charging_manager()
-        info = cm.get_pricing_info()
-        ppe = bool(getattr(info, 'is_pay_per_event', False))
+        ppe = bool(getattr(cm.get_pricing_info(), 'is_pay_per_event', False))
+
+        async def before_rewrite(mode: str):
+            # the edition is known before the model call: refuse now if the run's max charge cannot cover it,
+            # so the user does not spend model credit on a remake we could not deliver
+            ev = EV_STANDARD if mode == 'standard' else EV_TEXT
+            summary['plannedEvent'] = ev
+            if ppe and not affordable(cm, ev):
+                hint = ' or turn off "Reuse and clean pictures" for the Text-only edition' if ev == EV_STANDARD else ''
+                raise InputError(f'The maximum charge per run is lower than the price of this '
+                                 f'{"Standard" if ev == EV_STANDARD else "Text-only"} remake. Raise "Maximum cost per run"{hint} and run again. '
+                                 'The model was not called and nothing was charged.')
+            await Actor.set_status_message('Rewriting the manual (this usually takes 30-120 seconds)...')
 
         async def rewrite_fn(messages):
-            # the edition is known before the model call: make sure the run's max charge covers it first
-            await Actor.set_status_message('Rewriting the manual (this usually takes 30-120 seconds)...')
             raw, usage = await call_llm(messages, api_key, model, base)
             summary['llmUsage'] = {k: usage.get(k) for k in ('prompt_tokens', 'completion_tokens', 'total_tokens')}
             return raw
 
-        def log(msg):
-            Actor.log.info(msg)
-
         try:
             await Actor.set_status_message(f'Reading {len(sources)} file(s) and cleaning pictures...')
-            from .extract import check_cap
-            check_cap(sources)
-            if ppe:
-                ev = EV_STANDARD if include_images else EV_TEXT
-                if cm.calculate_max_event_charge_count_within_limit(EV_TEXT) < 1:
-                    return await fail(summary, 'The maximum charge per run is lower than the price of a text-only remake. Raise "Maximum cost per run" and try again. Nothing was charged.')
-                summary['plannedEvent'] = ev
             res = await run_pipeline(sources, include_images=include_images, title=opts['title'], checklist=opts['checklistMode'],
-                                     paper=opts['paperSize'], password=inp.get('pdfPassword') or None, rewrite_fn=rewrite_fn, log=log)
+                                     paper=opts['paperSize'], password=inp.get('pdfPassword') or None, rewrite_fn=rewrite_fn,
+                                     log=Actor.log.info, before_rewrite=before_rewrite)
         except InputError as e:
             return await fail(summary, _nc(e))
         except Exception as e:  # noqa: BLE001
-            Actor.log.exception('Remake failed')
-            return await fail(summary, f'The remake failed ({type(e).__name__}: {str(e)[:200]}). Nothing was charged; try again or contact us via the Issues tab.')
+            Actor.log.error(f'Remake failed: {type(e).__name__}')
+            return await fail(summary, f'The remake failed ({type(e).__name__}: {redact(str(e), api_key)[:200]}). Nothing was charged; '
+                                       'try again or report it in the Issues tab.')
 
         event = EV_STANDARD if res['mode'] == 'standard' else EV_TEXT
-        if ppe and cm.calculate_max_event_charge_count_within_limit(event) < 1:
-            return await fail(summary, f"This upload qualifies for the {'Standard' if event == EV_STANDARD else 'Text-only'} edition but the maximum charge per run is lower than its price. "
-                                       'Raise "Maximum cost per run" (or turn off "Reuse and clean pictures" for the Text-only edition) and run again. Nothing was charged.')
+        if ppe and not affordable(cm, event):
+            return await fail(summary, 'The maximum charge per run is lower than the price of this remake. Raise "Maximum cost per run" and run again. Nothing was charged.')
 
-        await Actor.set_value('OUTPUT.pdf', res['pdf'], content_type='application/pdf')
-        await Actor.set_value('REMAKE.md', res['markdown'].encode('utf-8'), content_type='text/markdown; charset=utf-8')
-        await Actor.set_value('REWRITE.json', res['rewrite'])
-        for fid, f in res['figures'].items():
-            await Actor.set_value(f'{fid}.png', f['png'], content_type='image/png')
-        rows = dataset_rows(res)
-        if rows:
-            await Actor.push_data(rows)
+        await save_outputs(res)                       # OUTPUT.pdf is stored before anything is charged
         charged = 0
         if ppe:
             r = await Actor.charge(event_name=event, count=1)
@@ -204,16 +259,44 @@ async def main() -> None:
         take = (f"{edition} remake of {res['units']} page(s)/image(s): {len(rw['steps'])} steps, {len(rw['parts'])} parts, "
                 f"{len(rw['warnings'])} warnings, {len(rw['gaps'])} gaps flagged" + (f", {len(res['figures'])} pictures" if res['figures'] else '')
                 + '. Download OUTPUT.pdf.' + (f" {res['modeNote']}" if res['modeNote'] else ''))
-        summary.update({
-            'status': 'succeeded', 'edition': res['mode'], 'chargedEvent': event if charged else None, 'charged': charged,
-            'modeNote': res['modeNote'], 'sources': res['sources'], 'pagesOrImages': res['units'], 'textPages': res['textPages'],
-            'pagesReadFromPictures': res['scanPages'], 'usablePictures': res['usablePictures'], 'picturesPlaced': len(res['figures']),
-            'skippedPictures': res['skippedImages'][:50], 'hiddenTextRemoved': len(res['hiddenRemoved']),
-            'hiddenTextDetails': res['hiddenRemoved'][:50], 'title': rw['title'], 'difficulty': rw['difficulty'], 'timeEstimate': rw['timeEstimate'],
-            'counts': {'steps': len(rw['steps']), 'parts': len(rw['parts']), 'warnings': len(rw['warnings']), 'gaps': len(rw['gaps']), 'figures': len(res['figures'])},
-            'outputs': {'pdf': 'OUTPUT.pdf', 'markdown': 'REMAKE.md', 'rewriteJson': 'REWRITE.json', 'figures': [f'{k}.png' for k in res['figures']]},
-            'takeaway': take[:400], 'finishedAt': datetime.now(timezone.utc).isoformat(timespec='seconds'),
-            'disclaimer': 'Rewrite of the uploaded source, not a certified replacement. No standards or compliance certification is claimed.',
-        })
-        await Actor.set_value('SUMMARY', summary)
+        await finish_summary(summary, res, event if charged else None, charged, take)
         await Actor.set_status_message(f"Done: {take[:300]}")
+
+
+def affordable(cm, event: str) -> bool:
+    """Can the run's maximum charge still cover one `event`? None from the SDK means no limit / unknown price."""
+    n = cm.calculate_max_event_charge_count_within_limit(event)
+    return n is None or n >= 1
+
+
+def redact(text: str, secret: str) -> str:
+    return text.replace(secret, '***') if secret else text
+
+
+async def save_outputs(res: dict) -> None:
+    await Actor.set_value('OUTPUT.pdf', res['pdf'], content_type='application/pdf')
+    await Actor.set_value('REMAKE.md', res['markdown'].encode('utf-8'), content_type='text/markdown; charset=utf-8')
+    await Actor.set_value('REWRITE.json', res['rewrite'])
+    for fid, f in res['figures'].items():
+        await Actor.set_value(f'{fid}.png', f['png'], content_type='image/png')
+    rows = dataset_rows(res)
+    if rows:
+        await Actor.push_data(rows)
+
+
+async def finish_summary(summary: dict, res: dict, event, charged: int, take: str, sample: bool = False) -> None:
+    rw = res['rewrite']
+    summary.update({
+        'status': 'succeeded', 'sample': sample, 'edition': 'sample' if sample else res['mode'], 'layout': res['mode'],
+        'chargedEvent': event, 'charged': charged, 'modeNote': res['modeNote'], 'sources': res['sources'],
+        'pagesOrImages': res['units'], 'textPages': res['textPages'], 'pagesReadFromPictures': res['scanPages'],
+        'usablePictures': res['usablePictures'], 'picturesPlaced': len(res['figures']), 'skippedPictures': res['skippedImages'][:50],
+        'hiddenTextRemoved': len(res['hiddenRemoved']), 'hiddenTextDetails': res['hiddenRemoved'][:50], 'title': rw['title'],
+        'difficulty': rw['difficulty'], 'timeEstimate': rw['timeEstimate'],
+        'counts': {'steps': len(rw['steps']), 'parts': len(rw['parts']), 'warnings': len(rw['warnings']), 'gaps': len(rw['gaps']), 'figures': len(res['figures'])},
+        'outputs': {'pdf': 'OUTPUT.pdf', 'markdown': 'REMAKE.md', 'rewriteJson': 'REWRITE.json', 'figures': [f'{k}.png' for k in res['figures']]},
+        'takeaway': take[:400], 'finishedAt': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+        'disclaimer': 'Rewrite of the uploaded source, not a certified replacement. No standards or compliance certification is claimed.'
+                      if not sample else 'Free sample made from a fictional demo manual bundled with the Actor; not a remake of any upload; nothing charged.',
+    })
+    await Actor.set_value('SUMMARY', summary)
