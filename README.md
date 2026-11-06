@@ -4,6 +4,10 @@
 
 This is a rewrite of the file you upload. It is not an official or certified replacement for the manufacturer's manual and makes no safety, standards or compliance claim.
 
+## Releases
+
+Tagged builds match the Apify Actor version (latest: [v0.1.3](https://github.com/pandadad0214/manual-remake/releases/latest)). There is nothing to install locally — run it on the [Apify Store](https://apify.com/pandadad0214/manual-remake).
+
 ## Use it on Apify
 
 Manual Remake runs as an Apify Actor at [apify.com/pandadad0214/manual-remake](https://apify.com/pandadad0214/manual-remake). There is nothing to install.
