@@ -6,7 +6,7 @@ This is a rewrite of the file you upload. It is not an official or certified rep
 
 ## Use it on Apify
 
-Manual Remake runs as an Apify Actor (publishing soon at `apify.com/pandadad0214/manual-remake`). There is nothing to install.
+Manual Remake runs as an Apify Actor at [apify.com/pandadad0214/manual-remake](https://apify.com/pandadad0214/manual-remake). There is nothing to install.
 
 ### Free sample (no upload, no key, no charge)
 
