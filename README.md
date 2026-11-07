@@ -129,6 +129,18 @@ Some PDFs carry text people cannot see (white, microscopic, invisible or off-pag
 - **HEIC photos:** export them as JPEG or PNG first.
 - How this differs from step-by-step chat helpers: those walk you through a manual on screen; Manual Remake gives you a finished document to keep, print or share.
 
+## FAQ
+
+**Is there a free way to try Manual Remake?** Yes. Leave **Manual files** and **Manual links** empty, or tick **Free sample**, then **Start**. You get a remade PDF of the bundled fictional Birchline ST-2 demo with no upload, no LLM key and no charge. The PDF and summary are marked **FREE SAMPLE**.
+
+**How do I switch between free sample, Text-only and Standard?** All three editions are the same Actor. See [Switch editions](#switch-editions): empty upload (or **Free sample**) for free; upload + LLM key with **Reuse and clean pictures** off for Text-only; leave pictures on for Standard.
+
+**Do I need my own AI key?** Only for paid remakes of your own file. The free sample never calls a model. Your key stays encrypted and is never logged.
+
+**What if a paid run fails?** Refused or failed runs are not charged. If your run's maximum cost is below the edition price, the Actor stops before calling your model.
+
+**Can an AI agent use it?** Yes, through Apify's MCP server (`https://mcp.apify.com`, Actor `pandadad0214/manual-remake`). Start with `{"sampleMode": true}` for the free sample; the `SUMMARY` record includes `switchEditions` steps for Text-only and Standard.
+
 ## For developers
 
 Python 3.13 Actor (`apify/actor-python`). The pipeline is split so every stage except the model call can be tested offline:
