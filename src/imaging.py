@@ -3,6 +3,7 @@
 Everything here works on the user's own uploaded pictures. Nothing is drawn from scratch except the
 numbered markers that point at the matching rewritten step.
 """
+
 from __future__ import annotations
 
 import io
@@ -11,11 +12,10 @@ import math
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
-MIN_SIDE = 120          # smaller than this is an icon, bullet or logo, not a usable figure
-MIN_STD = 6.0           # near-uniform images (blank boxes, solid fills) are not usable
-MAX_SIDE = 1800         # downscale very large photos before work
-FONT_PATHS = ('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
-              '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf')
+MIN_SIDE = 120  # smaller than this is an icon, bullet or logo, not a usable figure
+MIN_STD = 6.0  # near-uniform images (blank boxes, solid fills) are not usable
+MAX_SIDE = 1800  # downscale very large photos before work
+FONT_PATHS = ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf")
 
 
 def _font(size: int):
@@ -32,29 +32,29 @@ def _font(size: int):
 
 def load(data: bytes) -> Image.Image:
     im = Image.open(io.BytesIO(data))
-    im = ImageOps.exif_transpose(im)          # phone photos: honour the camera's rotation flag
-    if im.mode in ('RGBA', 'LA', 'P'):
-        im = im.convert('RGBA')
-        bg = Image.new('RGB', im.size, 'white')
+    im = ImageOps.exif_transpose(im)  # phone photos: honour the camera's rotation flag
+    if im.mode in ("RGBA", "LA", "P"):
+        im = im.convert("RGBA")
+        bg = Image.new("RGB", im.size, "white")
         bg.paste(im, mask=im.split()[-1])
         im = bg
-    return im.convert('RGB')
+    return im.convert("RGB")
 
 
 def usability(im: Image.Image) -> tuple[bool, str]:
     """Is this picture worth reassembling? Returns (usable, reason)."""
     w, h = im.size
     if min(w, h) < MIN_SIDE:
-        return False, f'too small ({w}x{h}px)'
-    g = np.asarray(im.convert('L').resize((min(w, 256), min(h, 256))), dtype=np.float32)
+        return False, f"too small ({w}x{h}px)"
+    g = np.asarray(im.convert("L").resize((min(w, 256), min(h, 256))), dtype=np.float32)
     if float(g.std()) < MIN_STD:
-        return False, 'blank or a single solid colour'
-    return True, 'ok'
+        return False, "blank or a single solid colour"
+    return True, "ok"
 
 
 def _gray_small(im: Image.Image, side: int = 600) -> tuple[np.ndarray, float]:
     scale = min(1.0, side / max(im.size))
-    sm = im.convert('L').resize((max(1, int(im.width * scale)), max(1, int(im.height * scale))))
+    sm = im.convert("L").resize((max(1, int(im.width * scale)), max(1, int(im.height * scale))))
     return np.asarray(sm, dtype=np.float32), scale
 
 
@@ -115,7 +115,12 @@ def content_bbox(im: Image.Image, pad_frac: float = 0.03) -> tuple[int, int, int
         return (0, 0, im.width, im.height)
     x0, x1, y0, y1 = cols[0] / scale, (cols[-1] + 1) / scale, rows[0] / scale, (rows[-1] + 1) / scale
     pad = pad_frac * max(x1 - x0, y1 - y0)
-    return (max(0, int(x0 - pad)), max(0, int(y0 - pad)), min(im.width, int(math.ceil(x1 + pad))), min(im.height, int(math.ceil(y1 + pad))))
+    return (
+        max(0, int(x0 - pad)),
+        max(0, int(y0 - pad)),
+        min(im.width, int(math.ceil(x1 + pad))),
+        min(im.height, int(math.ceil(y1 + pad))),
+    )
 
 
 def crop(im: Image.Image) -> Image.Image:
@@ -130,7 +135,7 @@ def clean(im: Image.Image) -> Image.Image:
     """Even out the paper colour, lift contrast, remove speckle and sharpen a little."""
     g = np.asarray(im, dtype=np.float32)
     bg = background_level(im)
-    if 120 < bg < 250:                                   # off-white or yellowed paper: push it to white
+    if 120 < bg < 250:  # off-white or yellowed paper: push it to white
         g = np.clip(g * (255.0 / bg), 0, 255)
     out = Image.fromarray(g.astype(np.uint8))
     out = out.filter(ImageFilter.MedianFilter(3))
@@ -141,14 +146,14 @@ def clean(im: Image.Image) -> Image.Image:
 
 def prepare(im: Image.Image) -> tuple[Image.Image, dict]:
     """Full cleanup pass: downscale, deskew, crop, clean. Returns (image, info)."""
-    info = {'originalSize': list(im.size)}
+    info = {"originalSize": list(im.size)}
     if max(im.size) > MAX_SIDE:
         s = MAX_SIDE / max(im.size)
         im = im.resize((int(im.width * s), int(im.height * s)), Image.LANCZOS)
     im, angle = deskew(im)
     im = crop(im)
     im = clean(im)
-    info.update({'deskewDegrees': angle, 'finalSize': list(im.size)})
+    info.update({"deskewDegrees": angle, "finalSize": list(im.size)})
     return im, info
 
 
@@ -164,7 +169,7 @@ def overlay_callouts(im: Image.Image, callouts: list[dict]) -> Image.Image:
 
     The number shown is the rewritten step number so the picture and the step list match.
     """
-    im = im.copy().convert('RGB')
+    im = im.copy().convert("RGB")
     if not callouts:
         return im
     missing = [c for c in callouts if not _has_pos(c)]
@@ -173,18 +178,18 @@ def overlay_callouts(im: Image.Image, callouts: list[dict]) -> Image.Image:
     r = max(14, int(min(im.size) * 0.045))
     font = _font(int(r * 1.15))
     for c in callouts:
-        x, y = (float(c['x']), float(c['y'])) if _has_pos(c) else next(fallback)
+        x, y = (float(c["x"]), float(c["y"])) if _has_pos(c) else next(fallback)
         cx = min(max(x * im.width, r + 2), im.width - r - 2)
         cy = min(max(y * im.height, r + 2), im.height - r - 2)
-        d.ellipse([cx - r - 3, cy - r - 3, cx + r + 3, cy + r + 3], fill='white')
-        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill='#D32F2F', outline='white', width=max(2, r // 7))
-        d.text((cx, cy), str(int(c['step'])), font=font, fill='white', anchor='mm')
+        d.ellipse([cx - r - 3, cy - r - 3, cx + r + 3, cy + r + 3], fill="white")
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill="#D32F2F", outline="white", width=max(2, r // 7))
+        d.text((cx, cy), str(int(c["step"])), font=font, fill="white", anchor="mm")
     return im
 
 
 def _has_pos(c: dict) -> bool:
     try:
-        x, y = float(c.get('x')), float(c.get('y'))
+        x, y = float(c.get("x")), float(c.get("y"))
     except (TypeError, ValueError):
         return False
     return 0.0 <= x <= 1.0 and 0.0 <= y <= 1.0
@@ -192,7 +197,7 @@ def _has_pos(c: dict) -> bool:
 
 def to_png(im: Image.Image) -> bytes:
     buf = io.BytesIO()
-    im.save(buf, 'PNG', optimize=True)
+    im.save(buf, "PNG", optimize=True)
     return buf.getvalue()
 
 
@@ -201,5 +206,5 @@ def to_jpeg(im: Image.Image, side: int = 1024, quality: int = 80) -> bytes:
         s = side / max(im.size)
         im = im.resize((int(im.width * s), int(im.height * s)), Image.LANCZOS)
     buf = io.BytesIO()
-    im.convert('RGB').save(buf, 'JPEG', quality=quality)
+    im.convert("RGB").save(buf, "JPEG", quality=quality)
     return buf.getvalue()

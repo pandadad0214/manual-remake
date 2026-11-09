@@ -1,8 +1,13 @@
-.venv
-storage
-__pycache__
+
 *.pyc
 .preview
-tests/output_*.pdf
 .pytest_cache
+.ruff_cache/
+.venv
+.venv/
+__pycache__
+__pycache__/
 platform/
+storage
+tests/output_*.pdf
+uv.lock

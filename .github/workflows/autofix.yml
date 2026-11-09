@@ -1,0 +1,52 @@
+name: Autofix
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: autofix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ruff:
+    name: Ruff autofix
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Loop protection: skip bot pushes and [skip ci] commits.
+    # GITHUB_TOKEN pushes also do not re-trigger workflows.
+    if: >-
+      github.actor != 'github-actions[bot]'
+      && !contains(github.event.head_commit.message, '[skip ci]')
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.13"
+      - name: Autofix with ruff
+        run: |
+          set -euo pipefail
+          :
+          uv run --with ruff==0.17.3 ruff check . --fix
+          uv run --with ruff==0.17.3 ruff format .
+      - name: Commit and push if needed
+        run: |
+          set -euo pipefail
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No ruff changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "style: ruff autofix"
+          git push
+      - name: Verify clean
+        run: |
+          set -euo pipefail
+          :
+          uv run --with ruff==0.17.3 ruff check .
+          uv run --with ruff==0.17.3 ruff format --check .
