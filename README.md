@@ -4,6 +4,29 @@
 
 This is a rewrite of the file you upload. It is not an official or certified replacement for the manufacturer's manual and makes no safety, standards or compliance claim.
 
+## How to use this
+
+Open **[apify.com/pandadad0214/manual-remake](https://apify.com/pandadad0214/manual-remake)** (nothing to install; a free Apify account is enough for the free sample).
+
+1. **Try it free:** click **Start** with **Manual files** and **Manual links** empty (or tick **Free sample**). You get a real remade PDF of a fictional demo manual, marked FREE SAMPLE, with no key and no charge.
+2. **Remake your own manual:** upload your PDF or photos in **Manual files** (or paste **Manual links**) and paste your **LLM API key**.
+3. **Pick the edition and Start:** leave **Reuse and clean pictures** on for Standard ($39 per successful run) or turn it off for Text-only ($9 per successful run). Download `OUTPUT.pdf` from the run.
+
+Full switch steps between all three editions: [Switch editions](#switch-editions).
+
+## For AI agents
+
+| Field | Value |
+| --- | --- |
+| Purpose | Rewrite a confusing instruction manual (PDF or photos) into a clear, printable English PDF with steps, parts, warnings, gaps flagged and a checklist. |
+| Use when | A user has an existing manual that is hard to follow and wants a finished document to keep or print. |
+| Do not use when | The user needs an official, certified or safety-compliant manual, a non-English output, new artwork, or a live step-by-step chat walkthrough. |
+| How to call | Apify MCP server `https://mcp.apify.com`, Actor `pandadad0214/manual-remake`; or the Apify API. |
+| Inputs | `sampleMode` (free sample), `files` / `fileUrls` (up to 15 pages or photos), `includeImages` (Standard on, Text-only off), `llmApiKey`, optional `llmModel`, `llmBaseUrl`, `checklistMode`, `paperSize`, `title` |
+| Outputs | `OUTPUT.pdf` (print PDF), Markdown, and a `SUMMARY` record with `switchEditions` steps |
+| Cost | Free sample: free. Text-only: $9 per successful run. Standard: $39 per successful run. Refused or failed runs are not charged. |
+| Side effects | Calls the model on the caller's own key for paid runs; the key is encrypted and never logged. |
+
 ## Releases
 
 Tagged builds match the Apify Actor version (latest: [v0.1.3](https://github.com/pandadad0214/manual-remake/releases/latest)). There is nothing to install locally — run it on the [Apify Store](https://apify.com/pandadad0214/manual-remake).
