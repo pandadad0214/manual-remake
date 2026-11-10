@@ -10,6 +10,8 @@ This is a rewrite of the file you upload. It is not an official or certified rep
 
 This project is a module of the Panda Federation — public-data tools, MCP servers, and local-first apps in one catalog. See the rest of the work, including books when they publish and the matching free or paid editions of this tool, at the [official site](https://pandafederation.com/).
 
+Follow on X: [@PandaFedHQ](https://x.com/PandaFedHQ)
+
 ## How to use this
 
 Open **[apify.com/pandadad0214/manual-remake](https://apify.com/pandadad0214/manual-remake)** (nothing to install; a free Apify account is enough for the free sample).
