@@ -160,6 +160,19 @@ Some PDFs carry text people cannot see (white, microscopic, invisible or off-pag
 - **HEIC photos:** export them as JPEG or PNG first.
 - How this differs from step-by-step chat helpers: those walk you through a manual on screen; Manual Remake gives you a finished document to keep, print or share.
 
+## Task examples
+
+Copy any of these into the Actor's JSON input (or pass them from an agent or the API).
+
+- **Free sample (no upload, no key, no charge):** `{"sampleMode": true}`
+- **Text-only remake of a PDF link:** `{"fileUrls": ["https://example.com/manual.pdf"], "includeImages": false, "llmApiKey": "<your key>"}`
+- **Standard remake with pictures, A4 paper:** `{"fileUrls": ["https://example.com/manual.pdf"], "includeImages": true, "paperSize": "a4", "llmApiKey": "<your key>"}`
+- **Steps only, no checklist pages:** `{"fileUrls": ["https://example.com/manual.pdf"], "checklistMode": false, "llmApiKey": "<your key>"}`
+
+## For AI agents
+
+Agents can run Manual Remake through Apify's MCP server (`https://mcp.apify.com`, Actor `pandadad0214/manual-remake`) or the Apify API. Start with `{"sampleMode": true}`: it is free, needs no key and returns a marked **FREE SAMPLE** PDF. A paid remake needs the caller's own LLM key and is charged once per successful run (Text-only or Standard, see [Switch editions](#switch-editions)); set the run's maximum cost at or above the edition price or the Actor stops before calling the model. The `SUMMARY` record lists the outputs and `switchEditions` steps.
+
 ## FAQ
 
 **Is there a free way to try Manual Remake?** Yes. Leave **Manual files** and **Manual links** empty, or tick **Free sample**, then **Start**. You get a remade PDF of the bundled fictional Birchline ST-2 demo with no upload, no LLM key and no charge. The PDF and summary are marked **FREE SAMPLE**.
