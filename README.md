@@ -39,7 +39,7 @@ Full switch steps between all three editions: [Switch editions](#switch-editions
 
 ## Releases
 
-Tagged builds match the Apify Actor version (latest: [v0.1.3](https://github.com/pandadad0214/manual-remake/releases/latest)). There is nothing to install locally — run it on the [Apify Store](https://apify.com/pandadad0214/manual-remake).
+Source releases are tagged on GitHub ([latest release](https://github.com/pandadad0214/manual-remake/releases/latest)); the Apify Actor is built from this repository. There is nothing to install locally — run it on the [Apify Store](https://apify.com/pandadad0214/manual-remake).
 
 ## Use it on Apify
 
@@ -171,7 +171,7 @@ Copy any of these into the Actor's JSON input (or pass them from an agent or the
 - **Standard remake with pictures, A4 paper:** `{"fileUrls": ["https://example.com/manual.pdf"], "includeImages": true, "paperSize": "a4", "llmApiKey": "<your key>"}`
 - **Steps only, no checklist pages:** `{"fileUrls": ["https://example.com/manual.pdf"], "checklistMode": false, "llmApiKey": "<your key>"}`
 
-## For AI agents
+## Calling it from an agent
 
 Agents can run Manual Remake through Apify's MCP server (`https://mcp.apify.com`, Actor `pandadad0214/manual-remake`) or the Apify API. Start with `{"sampleMode": true}`: it is free, needs no key and returns a marked **FREE SAMPLE** PDF. A paid remake needs the caller's own LLM key and is charged once per successful run (Text-only or Standard, see [Switch editions](#switch-editions)); set the run's maximum cost at or above the edition price or the Actor stops before calling the model. The `SUMMARY` record lists the outputs and `switchEditions` steps.
 
